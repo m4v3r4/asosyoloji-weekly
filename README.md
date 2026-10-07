@@ -120,3 +120,17 @@ Tag push edildiğinde repodaki tek release workflow'u kurulabilir ZIP paketini o
 - Aylık takvimde önceki ve sonraki ay gezinmesi eklendi.
 - Etkinlik yönetim listesine tarih, saat ve yer sütunları eklendi.
 - Tarih bilgisi olmayan etkinlikler yönetim listesinde açıkça işaretlenir.
+
+
+## 0.1.3
+
+- Veri modeli orijinal Asosyoloji etkinlik yapısına yaklaştırıldı.
+- Ana etkinlik içerik tipi artık \`event\`; tekil bağlantılar \`/event/...\` biçimindedir.
+- Etkinlik türleri \`event-categories\`, etiketler \`event-tags\` taksonomileriyle tutulur.
+- Tarih/saat alanları Events Manager uyumlu \`_event_start_date\`, \`_event_start_time\`, \`_event_end_date\`, \`_event_end_time\` meta anahtarlarını kullanır.
+- Mekanlar ayrı \`location\` içerik tipinde tutulur ve etkinlikler \`_location_id\` ile bağlanır.
+- Mekan adresi, şehir, bölge, posta kodu ve ülke alanları eklendi.
+- Eski \`asosyoloji_event\` ve \`_aso_event_*\` verileri için otomatik geçiş eklendi.
+- Eski Events Manager \`wp_em_locations\` verisini okuyabilen uyumluluk katmanı eklendi.
+- Haftalık / aylık widget görünümü Asosyoloji temasının tipografi, renk ve koyu mod değişkenleriyle uyumlu hale getirildi.
+- Aylık takvimde güncel gün vurgusu ve daha editoryal takvim görünümü eklendi.
