@@ -161,6 +161,7 @@ function asosyoloji_weekly_render_calendar( $args = array() ) {
 		}
 	}
 
+	$today         = asosyoloji_weekly_today();
 	$days_in_month = (int) wp_date( 't', strtotime( $first_day ) );
 	$start_weekday = (int) wp_date( 'N', strtotime( $first_day ) );
 	$previous_month = wp_date( 'Y-m', strtotime( '-1 month', strtotime( $first_day ) ) );
@@ -195,8 +196,18 @@ function asosyoloji_weekly_render_calendar( $args = array() ) {
 			<?php endfor; ?>
 
 			<?php for ( $day = 1; $day <= $days_in_month; $day++ ) : ?>
-				<?php $day_events = $events_by_day[ $day ] ?? array(); ?>
-				<div class="aso-calendar__day<?php echo $day_events ? ' has-events' : ''; ?>">
+				<?php
+				$day_events = $events_by_day[ $day ] ?? array();
+				$day_date   = sprintf( '%04d-%02d-%02d', $year, $month, $day );
+				$day_class  = 'aso-calendar__day';
+				if ( $day_events ) {
+					$day_class .= ' has-events';
+				}
+				if ( $day_date === $today ) {
+					$day_class .= ' is-today';
+				}
+				?>
+				<div class="<?php echo esc_attr( $day_class ); ?>">
 					<div class="aso-calendar__day-number"><?php echo esc_html( $day ); ?></div>
 					<?php foreach ( array_slice( $day_events, 0, 3 ) as $event ) : ?>
 						<a class="aso-calendar__event" href="<?php echo esc_url( $event['url'] ); ?>">
