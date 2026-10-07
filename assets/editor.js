@@ -7,6 +7,7 @@
   const PluginDocumentSettingPanel = wp.editPost.PluginDocumentSettingPanel;
   const TextControl = wp.components.TextControl;
   const ToggleControl = wp.components.ToggleControl;
+  const SelectControl = wp.components.SelectControl;
   const useSelect = wp.data.useSelect;
   const useDispatch = wp.data.useDispatch;
 
@@ -41,57 +42,53 @@
       el(TextControl, {
         label: 'Başlangıç tarihi',
         type: 'date',
-        value: meta._aso_event_start_date || '',
-        onChange: function (v) { setMeta('_aso_event_start_date', v); }
+        value: meta._event_start_date || '',
+        onChange: function (v) { setMeta('_event_start_date', v); }
       }),
       el(TextControl, {
         label: 'Başlangıç saati',
         type: 'time',
-        value: meta._aso_event_start_time || '',
-        onChange: function (v) { setMeta('_aso_event_start_time', v); }
+        value: meta._event_start_time || '',
+        onChange: function (v) { setMeta('_event_start_time', v); }
       }),
       el(TextControl, {
         label: 'Bitiş tarihi',
         type: 'date',
-        value: meta._aso_event_end_date || '',
-        onChange: function (v) { setMeta('_aso_event_end_date', v); }
+        value: meta._event_end_date || '',
+        onChange: function (v) { setMeta('_event_end_date', v); }
       }),
       el(TextControl, {
         label: 'Bitiş saati',
         type: 'time',
-        value: meta._aso_event_end_time || '',
-        onChange: function (v) { setMeta('_aso_event_end_time', v); }
+        value: meta._event_end_time || '',
+        onChange: function (v) { setMeta('_event_end_time', v); }
       }),
-      el(TextControl, {
+      el(SelectControl, {
         label: 'Mekan',
-        value: meta._aso_event_venue || '',
-        onChange: function (v) { setMeta('_aso_event_venue', v); }
-      }),
-      el(TextControl, {
-        label: 'Şehir',
-        value: meta._aso_event_city || '',
-        onChange: function (v) { setMeta('_aso_event_city', v); }
+        value: String(meta._location_id || 0),
+        options: (window.asosyolojiWeeklyEditor && window.asosyolojiWeeklyEditor.locations) || [{ label: 'Mekan seçin', value: '0' }],
+        onChange: function (v) { setMeta('_location_id', parseInt(v, 10) || 0); }
       }),
       el(TextControl, {
         label: 'Organizatör',
-        value: meta._aso_event_organizer || '',
-        onChange: function (v) { setMeta('_aso_event_organizer', v); }
+        value: meta._event_organizer || '',
+        onChange: function (v) { setMeta('_event_organizer', v); }
       }),
       el(TextControl, {
         label: 'Etkinlik bağlantısı',
         type: 'url',
-        value: meta._aso_event_url || '',
-        onChange: function (v) { setMeta('_aso_event_url', v); }
+        value: meta._event_url || '',
+        onChange: function (v) { setMeta('_event_url', v); }
       }),
       el(TextControl, {
         label: 'Fiyat / bilet bilgisi',
-        value: meta._aso_event_price || '',
-        onChange: function (v) { setMeta('_aso_event_price', v); }
+        value: meta._event_price || '',
+        onChange: function (v) { setMeta('_event_price', v); }
       }),
       el(ToggleControl, {
         label: 'Ücretsiz etkinlik',
-        checked: !!meta._aso_event_free,
-        onChange: function (v) { setMeta('_aso_event_free', !!v); }
+        checked: !!meta._event_free,
+        onChange: function (v) { setMeta('_event_free', !!v); }
       })
     );
   }
