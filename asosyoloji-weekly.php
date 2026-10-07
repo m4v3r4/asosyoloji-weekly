@@ -63,7 +63,7 @@ function asosyoloji_weekly_editor_assets( $hook ) {
 	}
 
 	$screen = get_current_screen();
-	if ( ! $screen || 'asosyoloji_event' !== $screen->post_type || ! $screen->is_block_editor() ) {
+	if ( ! $screen || 'event' !== $screen->post_type || ! $screen->is_block_editor() ) {
 		return;
 	}
 
