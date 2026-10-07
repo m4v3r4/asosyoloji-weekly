@@ -19,6 +19,34 @@ function asosyoloji_weekly_format_weekday( $date ) {
 	return $timestamp ? wp_date( 'l', $timestamp ) : '';
 }
 
+function asosyoloji_weekly_format_range( $start_date, $end_date ) {
+	if ( ! $start_date ) {
+		return '';
+	}
+
+	if ( ! $end_date || $end_date === $start_date ) {
+		return wp_date( 'd F', strtotime( $start_date ) );
+	}
+
+	$start_ts = strtotime( $start_date );
+	$end_ts   = strtotime( $end_date );
+
+	if ( wp_date( 'm Y', $start_ts ) === wp_date( 'm Y', $end_ts ) ) {
+		return sprintf(
+			'%1$s–%2$s %3$s',
+			wp_date( 'd', $start_ts ),
+			wp_date( 'd', $end_ts ),
+			wp_date( 'F', $end_ts )
+		);
+	}
+
+	return sprintf(
+		'%1$s – %2$s',
+		wp_date( 'd F', $start_ts ),
+		wp_date( 'd F', $end_ts )
+	);
+}
+
 function asosyoloji_weekly_render_list( $args = array() ) {
 	$defaults = array(
 		'title'      => __( 'Haftalık', 'asosyoloji-weekly' ),
@@ -73,10 +101,16 @@ function asosyoloji_weekly_render_list( $args = array() ) {
 		<div class="aso-weekly__events">
 			<?php if ( $events ) : ?>
 				<?php foreach ( $events as $event ) : ?>
-					<article class="aso-weekly-event">
+					<?php $is_multiday = $event['end_date'] && $event['end_date'] !== $event['start_date']; ?>
+					<article class="aso-weekly-event<?php echo $is_multiday ? ' is-multiday' : ''; ?>">
 						<time class="aso-weekly-event__date" datetime="<?php echo esc_attr( $event['start_date'] ); ?>">
-							<span class="aso-weekly-event__weekday"><?php echo esc_html( asosyoloji_weekly_format_weekday( $event['start_date'] ) ); ?></span>
-							<span class="aso-weekly-event__day"><?php echo esc_html( asosyoloji_weekly_format_day( $event['start_date'] ) ); ?></span>
+							<?php if ( $is_multiday ) : ?>
+								<span class="aso-weekly-event__weekday"><?php esc_html_e( 'Tarih Aralığı', 'asosyoloji-weekly' ); ?></span>
+								<span class="aso-weekly-event__range-label"><?php echo esc_html( asosyoloji_weekly_format_range( $event['start_date'], $event['end_date'] ) ); ?></span>
+							<?php else : ?>
+								<span class="aso-weekly-event__weekday"><?php echo esc_html( asosyoloji_weekly_format_weekday( $event['start_date'] ) ); ?></span>
+								<span class="aso-weekly-event__day"><?php echo esc_html( asosyoloji_weekly_format_day( $event['start_date'] ) ); ?></span>
+							<?php endif; ?>
 						</time>
 
 						<div class="aso-weekly-event__body">
@@ -210,11 +244,31 @@ function asosyoloji_weekly_render_calendar( $args = array() ) {
 				<div class="<?php echo esc_attr( $day_class ); ?>">
 					<div class="aso-calendar__day-number"><?php echo esc_html( $day ); ?></div>
 					<?php foreach ( array_slice( $day_events, 0, 3 ) as $event ) : ?>
-						<a class="aso-calendar__event" href="<?php echo esc_url( $event['url'] ); ?>">
-							<?php if ( $event['start_time'] ) : ?>
+						<?php
+						$is_multiday  = $event['end_date'] && $event['end_date'] !== $event['start_date'];
+						$is_start     = $day_date === $event['start_date'];
+						$is_end       = $day_date === $event['end_date'];
+						$event_class  = 'aso-calendar__event';
+						if ( $is_multiday ) {
+							$event_class .= ' is-multiday';
+							if ( $is_start ) {
+								$event_class .= ' is-range-start';
+							} elseif ( $is_end ) {
+								$event_class .= ' is-range-end';
+							} else {
+								$event_class .= ' is-range-middle';
+							}
+						}
+						?>
+						<a class="<?php echo esc_attr( $event_class ); ?>" href="<?php echo esc_url( $event['url'] ); ?>" data-event-id="<?php echo esc_attr( $event['id'] ); ?>">
+							<?php if ( $event['start_time'] && ( ! $is_multiday || $is_start ) ) : ?>
 								<span><?php echo esc_html( $event['start_time'] ); ?></span>
 							<?php endif; ?>
-							<?php echo esc_html( $event['title'] ); ?>
+							<?php if ( ! $is_multiday || $is_start ) : ?>
+								<?php echo esc_html( $event['title'] ); ?>
+							<?php else : ?>
+								<span class="screen-reader-text"><?php echo esc_html( $event['title'] ); ?></span>
+							<?php endif; ?>
 						</a>
 					<?php endforeach; ?>
 					<?php if ( count( $day_events ) > 3 ) : ?>
@@ -242,13 +296,25 @@ function asosyoloji_weekly_shortcode( $atts ) {
 		'asosyoloji_haftalik'
 	);
 
-	return asosyoloji_weekly_render_list(
+	if ( 'upcoming' === $atts['mode'] ) {
+		return asosyoloji_weekly_render_list(
+			array(
+				'title'   => sanitize_text_field( $atts['title'] ),
+				'mode'    => 'upcoming',
+				'count'   => absint( $atts['count'] ),
+				'city'    => sanitize_text_field( $atts['city'] ),
+				'compact' => '1' === (string) $atts['compact'],
+			)
+		);
+	}
+
+	return asosyoloji_weekly_render_switcher(
 		array(
 			'title'   => sanitize_text_field( $atts['title'] ),
-			'mode'    => 'upcoming' === $atts['mode'] ? 'upcoming' : 'week',
 			'count'   => absint( $atts['count'] ),
 			'city'    => sanitize_text_field( $atts['city'] ),
 			'compact' => '1' === (string) $atts['compact'],
+			'active'  => 'month' === $atts['mode'] ? 'month' : 'week',
 		)
 	);
 }
@@ -274,3 +340,47 @@ function asosyoloji_calendar_shortcode( $atts ) {
 	);
 }
 add_shortcode( 'asosyoloji_takvim', 'asosyoloji_calendar_shortcode' );
+
+
+function asosyoloji_weekly_render_switcher( $args = array() ) {
+	$defaults = array(
+		'title'   => __( 'Etkinlik Takvimi', 'asosyoloji-weekly' ),
+		'count'   => 10,
+		'city'    => '',
+		'compact' => false,
+		'active'  => 'week',
+	);
+
+	$args      = wp_parse_args( $args, $defaults );
+	$active    = 'month' === $args['active'] ? 'month' : 'week';
+	$widget_id = wp_unique_id( 'aso-weekly-switcher-' );
+
+	ob_start();
+	?>
+	<section class="aso-weekly-switcher" id="<?php echo esc_attr( $widget_id ); ?>" data-aso-calendar-switcher>
+		<div class="aso-weekly-switcher__bar" role="tablist" aria-label="<?php esc_attr_e( 'Takvim görünümü', 'asosyoloji-weekly' ); ?>">
+			<button type="button" class="aso-weekly-switcher__tab<?php echo 'week' === $active ? ' is-active' : ''; ?>" role="tab" aria-selected="<?php echo 'week' === $active ? 'true' : 'false'; ?>" aria-controls="<?php echo esc_attr( $widget_id ); ?>-week" data-aso-calendar-tab="week">
+				<?php esc_html_e( 'Haftalık', 'asosyoloji-weekly' ); ?>
+			</button>
+			<button type="button" class="aso-weekly-switcher__tab<?php echo 'month' === $active ? ' is-active' : ''; ?>" role="tab" aria-selected="<?php echo 'month' === $active ? 'true' : 'false'; ?>" aria-controls="<?php echo esc_attr( $widget_id ); ?>-month" data-aso-calendar-tab="month">
+				<?php esc_html_e( 'Aylık', 'asosyoloji-weekly' ); ?>
+			</button>
+		</div>
+
+		<div id="<?php echo esc_attr( $widget_id ); ?>-week" class="aso-weekly-switcher__panel<?php echo 'week' === $active ? ' is-active' : ''; ?>" role="tabpanel" <?php echo 'week' === $active ? '' : 'hidden'; ?> data-aso-calendar-panel="week">
+			<?php echo wp_kses_post( asosyoloji_weekly_render_list( array(
+				'title'   => $args['title'],
+				'mode'    => 'week',
+				'count'   => $args['count'],
+				'city'    => $args['city'],
+				'compact' => $args['compact'],
+			) ) ); ?>
+		</div>
+
+		<div id="<?php echo esc_attr( $widget_id ); ?>-month" class="aso-weekly-switcher__panel<?php echo 'month' === $active ? ' is-active' : ''; ?>" role="tabpanel" <?php echo 'month' === $active ? '' : 'hidden'; ?> data-aso-calendar-panel="month">
+			<?php echo wp_kses_post( asosyoloji_weekly_render_calendar( array( 'title' => $args['title'] ) ) ); ?>
+		</div>
+	</section>
+	<?php
+	return (string) ob_get_clean();
+}
