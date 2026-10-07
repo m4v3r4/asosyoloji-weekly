@@ -1,148 +1,103 @@
 <?php
-/**
- * Event queries.
- *
- * @package AsosyolojiWeekly
- */
-
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 function asosyoloji_weekly_today() {
 	return current_time( 'Y-m-d' );
 }
 
 function asosyoloji_weekly_week_range( $timestamp = null ) {
-	$timestamp = $timestamp ? $timestamp : current_time( 'timestamp' );
-	$start     = strtotime( 'today', $timestamp );
-	$end       = strtotime( '+6 days', $start );
-
+	$timestamp = $timestamp ?: current_time( 'timestamp' );
+	$start = strtotime( 'today', $timestamp );
 	return array(
 		'start' => wp_date( 'Y-m-d', $start ),
-		'end'   => wp_date( 'Y-m-d', $end ),
+		'end'   => wp_date( 'Y-m-d', strtotime( '+6 days', $start ) ),
 	);
 }
 
-function asosyoloji_weekly_event_post_types() {
-	$types = array( 'event' );
+function asosyoloji_weekly_event_data( $post_id ) {
+	$start_ts  = absint( get_post_meta( $post_id, 'em_start_date_time', true ) );
+	$end_ts    = absint( get_post_meta( $post_id, 'em_end_date_time', true ) );
+	$start_raw = get_post_meta( $post_id, 'em_start_time', true );
+	$end_raw   = get_post_meta( $post_id, 'em_end_time', true );
+	$all_day   = (bool) get_post_meta( $post_id, 'em_all_day', true );
 
-	if ( post_type_exists( 'event' ) ) {
-		$types[] = 'event';
-	}
+	$start_date = $start_ts ? gmdate( 'Y-m-d', $start_ts ) : '';
+	$end_date   = $end_ts ? gmdate( 'Y-m-d', $end_ts ) : $start_date;
+	$start_time = $all_day ? '' : asosyoloji_weekly_time_24h( $start_raw ?: ( $start_ts ? gmdate( 'H:i', $start_ts ) : '' ) );
+	$end_time   = $all_day ? '' : asosyoloji_weekly_time_24h( $end_raw ?: ( $end_ts ? gmdate( 'H:i', $end_ts ) : '' ) );
 
-	return apply_filters( 'asosyoloji_weekly_event_post_types', array_values( array_unique( $types ) ) );
-}
+	$venues = wp_get_post_terms( $post_id, 'em_venue', array( 'fields' => 'names' ) );
+	$types  = wp_get_post_terms( $post_id, 'em_event_type', array( 'fields' => 'names' ) );
 
-function asosyoloji_weekly_first_meta( $post_id, $keys ) {
-	foreach ( $keys as $key ) {
-		$value = get_post_meta( $post_id, $key, true );
-		if ( '' !== $value && null !== $value ) {
-			return $value;
-		}
-	}
-
-	return '';
-}
-
-function asosyoloji_weekly_normalize_date( $value ) {
-	if ( ! $value ) {
-		return '';
-	}
-
-	if ( is_numeric( $value ) && strlen( (string) $value ) >= 9 ) {
-		return wp_date( 'Y-m-d', (int) $value );
-	}
-
-	$timestamp = strtotime( (string) $value );
-	return $timestamp ? wp_date( 'Y-m-d', $timestamp ) : sanitize_text_field( (string) $value );
-}
-
-function asosyoloji_weekly_normalize_time( $value ) {
-	if ( ! $value ) {
-		return '';
-	}
-
-	$timestamp = strtotime( (string) $value );
-	return $timestamp ? wp_date( 'H:i', $timestamp ) : sanitize_text_field( (string) $value );
+	return array(
+		'id'         => absint( $post_id ),
+		'post_type'  => 'em_event',
+		'title'      => get_the_title( $post_id ),
+		'url'        => get_permalink( $post_id ),
+		'excerpt'    => get_the_excerpt( $post_id ),
+		'image'      => get_the_post_thumbnail_url( $post_id, 'large' ),
+		'start_date' => $start_date,
+		'start_time' => $start_time,
+		'end_date'   => $end_date,
+		'end_time'   => $end_time,
+		'venue'      => ( ! is_wp_error( $venues ) && $venues ) ? $venues[0] : '',
+		'city'       => '',
+		'organizer'  => '',
+		'event_url'  => get_permalink( $post_id ),
+		'price'      => get_post_meta( $post_id, 'em_fixed_event_price', true ),
+		'free'       => false,
+		'all_day'    => $all_day,
+		'types'      => ( ! is_wp_error( $types ) ) ? $types : array(),
+	);
 }
 
 function asosyoloji_weekly_get_events( $args = array() ) {
 	$defaults = array(
-		'start'        => asosyoloji_weekly_today(),
-		'end'          => '',
-		'count'        => -1,
-		'event_type'     => 0,
-		'city'         => '',
-		'include_past' => false,
+		'start'      => asosyoloji_weekly_today(),
+		'end'        => '',
+		'count'      => -1,
+		'event_type' => 0,
+		'city'       => '',
 	);
-
 	$args = wp_parse_args( $args, $defaults );
+
+	$start_ts = asosyoloji_weekly_timestamp_from_fields( $args['start'], '00:00' );
+	$end_ts   = $args['end'] ? asosyoloji_weekly_timestamp_from_fields( $args['end'], '23:59' ) : PHP_INT_MAX;
 
 	$meta_query = array(
 		'relation' => 'AND',
 		array(
-			'key'     => '_event_start_date',
+			'key'     => 'em_start_date_time',
 			'compare' => 'EXISTS',
+		),
+		array(
+			'key'     => 'em_start_date_time',
+			'value'   => $end_ts,
+			'compare' => '<=',
+			'type'    => 'NUMERIC',
+		),
+		array(
+			'key'     => 'em_end_date_time',
+			'value'   => $start_ts,
+			'compare' => '>=',
+			'type'    => 'NUMERIC',
 		),
 	);
 
-	if ( $args['start'] || $args['end'] ) {
-		$range_start = $args['start'] ? sanitize_text_field( $args['start'] ) : '0000-01-01';
-		$range_end   = $args['end'] ? sanitize_text_field( $args['end'] ) : '9999-12-31';
-
-		$meta_query[] = array(
-			'relation' => 'OR',
-			array(
-				'relation' => 'AND',
-				array(
-					'key'     => '_event_start_date',
-					'value'   => $range_start,
-					'compare' => '>=',
-					'type'    => 'DATE',
-				),
-				array(
-					'key'     => '_event_start_date',
-					'value'   => $range_end,
-					'compare' => '<=',
-					'type'    => 'DATE',
-				),
-			),
-			array(
-				'relation' => 'AND',
-				array(
-					'key'     => '_event_start_date',
-					'value'   => $range_start,
-					'compare' => '<=',
-					'type'    => 'DATE',
-				),
-				array(
-					'key'     => '_event_end_date',
-					'value'   => $range_start,
-					'compare' => '>=',
-					'type'    => 'DATE',
-				),
-			),
-		);
-	}
-
 	$query_args = array(
-		'post_type'      => 'event',
+		'post_type'      => 'em_event',
 		'post_status'    => 'publish',
 		'posts_per_page' => intval( $args['count'] ),
-		'meta_key'       => '_event_start_date',
-		'orderby'        => array(
-			'meta_value' => 'ASC',
-			'title'      => 'ASC',
-		),
-		'meta_type'      => 'DATE',
+		'meta_key'       => 'em_start_date_time',
+		'orderby'        => 'meta_value_num',
+		'order'          => 'ASC',
 		'meta_query'     => $meta_query,
 	);
 
 	if ( $args['event_type'] ) {
 		$query_args['tax_query'] = array(
 			array(
-				'taxonomy' => 'event-categories',
+				'taxonomy' => 'em_event_type',
 				'field'    => 'term_id',
 				'terms'    => absint( $args['event_type'] ),
 			),
@@ -152,205 +107,8 @@ function asosyoloji_weekly_get_events( $args = array() ) {
 	return new WP_Query( $query_args );
 }
 
-function asosyoloji_weekly_get_legacy_events( $args = array() ) {
-	if ( ! post_type_exists( 'event' ) ) {
-		return array();
-	}
-
-	$defaults = array(
-		'start' => asosyoloji_weekly_today(),
-		'end'   => '',
-		'count' => -1,
-	);
-
-	$args = wp_parse_args( $args, $defaults );
-
-	$posts = get_posts(
-		array(
-			'post_type'      => 'event',
-			'post_status'    => 'publish',
-			'posts_per_page' => -1,
-			'orderby'        => 'date',
-			'order'          => 'DESC',
-		)
-	);
-
-	$events = array();
-
-	foreach ( $posts as $post ) {
-		$event = asosyoloji_weekly_event_data( $post->ID );
-
-		if ( ! $event['start_date'] ) {
-			continue;
-		}
-
-		$event_end = $event['end_date'] ? $event['end_date'] : $event['start_date'];
-
-		if ( $args['start'] && $event_end < $args['start'] ) {
-			continue;
-		}
-
-		if ( $args['end'] && $event['start_date'] > $args['end'] ) {
-			continue;
-		}
-
-		$events[] = $event;
-	}
-
-	usort(
-		$events,
-		static function ( $a, $b ) {
-			return strcmp( $a['start_date'] . ' ' . $a['start_time'], $b['start_date'] . ' ' . $b['start_time'] );
-		}
-	);
-
-	if ( $args['count'] > 0 ) {
-		$events = array_slice( $events, 0, (int) $args['count'] );
-	}
-
-	return $events;
-}
-
-function asosyoloji_weekly_location_data( $location_id ) {
-	$location_id = absint( $location_id );
-
-	if ( ! $location_id ) {
-		return array(
-			'name'    => '',
-			'city'    => '',
-			'address' => '',
-		);
-	}
-
-	$location_post = get_post( $location_id );
-	if ( $location_post && 'location' === $location_post->post_type ) {
-		return array(
-			'name'    => get_the_title( $location_id ),
-			'city'    => get_post_meta( $location_id, '_location_town', true ),
-			'address' => get_post_meta( $location_id, '_location_address', true ),
-		);
-	}
-
-	if ( function_exists( 'em_get_location' ) ) {
-		$em_location = em_get_location( $location_id );
-		if ( $em_location && ! empty( $em_location->location_id ) ) {
-			return array(
-				'name'    => (string) $em_location->location_name,
-				'city'    => (string) $em_location->location_town,
-				'address' => (string) $em_location->location_address,
-			);
-		}
-	}
-
-	global $wpdb;
-	$table = $wpdb->prefix . 'em_locations';
-	$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
-
-	if ( $exists === $table ) {
-		$row = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT location_name, location_town, location_address FROM {$table} WHERE location_id = %d LIMIT 1",
-				$location_id
-			),
-			ARRAY_A
-		);
-
-		if ( $row ) {
-			return array(
-				'name'    => (string) ( $row['location_name'] ?? '' ),
-				'city'    => (string) ( $row['location_town'] ?? '' ),
-				'address' => (string) ( $row['location_address'] ?? '' ),
-			);
-		}
-	}
-
-	return array(
-		'name'    => '',
-		'city'    => '',
-		'address' => '',
-	);
-}
-
-function asosyoloji_weekly_event_data( $post_id ) {
-	$post_type   = get_post_type( $post_id );
-	$location_id   = absint( get_post_meta( $post_id, '_location_id', true ) );
-	$location_data = asosyoloji_weekly_location_data( $location_id );
-	$venue         = $location_data['name'];
-	$city          = $location_data['city'];
-
-	if ( ! $venue ) {
-		$venue = asosyoloji_weekly_first_meta( $post_id, array( '_aso_event_venue', 'event_venue', '_event_venue', 'venue', '_venue', 'location', '_location' ) );
-	}
-	if ( ! $city ) {
-		$city = asosyoloji_weekly_first_meta( $post_id, array( '_aso_event_city', 'event_city', '_event_city', 'city', '_city' ) );
-	}
-
-	$start_date = asosyoloji_weekly_first_meta(
-		$post_id,
-		array(
-			'_event_start_date',
-			'_aso_event_start_date',
-			'event_start_date',
-			'start_date',
-			'_start_date',
-			'event_date',
-			'_event_date',
-		)
-	);
-	$end_date = asosyoloji_weekly_first_meta(
-		$post_id,
-		array(
-			'_event_end_date',
-			'_aso_event_end_date',
-			'event_end_date',
-			'end_date',
-			'_end_date',
-		)
-	);
-	$start_time = asosyoloji_weekly_first_meta(
-		$post_id,
-		array(
-			'_event_start_time',
-			'_aso_event_start_time',
-			'event_start_time',
-			'start_time',
-			'_start_time',
-		)
-	);
-	$end_time = asosyoloji_weekly_first_meta(
-		$post_id,
-		array(
-			'_event_end_time',
-			'_aso_event_end_time',
-			'event_end_time',
-			'end_time',
-			'_end_time',
-		)
-	);
-
-	return array(
-		'id'         => absint( $post_id ),
-		'post_type'  => $post_type,
-		'title'      => get_the_title( $post_id ),
-		'url'        => get_permalink( $post_id ),
-		'excerpt'    => get_the_excerpt( $post_id ),
-		'image'      => get_the_post_thumbnail_url( $post_id, 'large' ),
-		'start_date' => asosyoloji_weekly_normalize_date( $start_date ),
-		'start_time' => asosyoloji_weekly_normalize_time( $start_time ),
-		'end_date'   => asosyoloji_weekly_normalize_date( $end_date ),
-		'end_time'   => asosyoloji_weekly_normalize_time( $end_time ),
-		'venue'      => $venue,
-		'city'       => $city,
-		'organizer'  => asosyoloji_weekly_first_meta( $post_id, array( '_event_organizer', '_aso_event_organizer', 'event_organizer', 'organizer', '_organizer' ) ),
-		'event_url'  => asosyoloji_weekly_first_meta( $post_id, array( '_event_url', '_aso_event_url', 'event_url', 'url' ) ),
-		'price'      => asosyoloji_weekly_first_meta( $post_id, array( '_event_price', '_aso_event_price', 'event_price', 'price' ) ),
-		'free'       => (bool) asosyoloji_weekly_first_meta( $post_id, array( '_event_free', '_aso_event_free', 'event_free' ) ),
-		'types'      => 'event' === $post_type ? wp_get_post_terms( $post_id, 'event-categories', array( 'fields' => 'names' ) ) : array(),
-	);
-}
-
 function asosyoloji_weekly_collect_events( $args = array() ) {
-	$query  = asosyoloji_weekly_get_events( $args );
+	$query = asosyoloji_weekly_get_events( $args );
 	$events = array();
 
 	while ( $query->have_posts() ) {
@@ -359,35 +117,11 @@ function asosyoloji_weekly_collect_events( $args = array() ) {
 	}
 	wp_reset_postdata();
 
-	$events = array_merge( $events, asosyoloji_weekly_get_legacy_events( $args ) );
-
-	$unique = array();
-	foreach ( $events as $event ) {
-		$unique[ $event['post_type'] . ':' . $event['id'] ] = $event;
-	}
-	$events = array_values( $unique );
-
 	if ( ! empty( $args['city'] ) ) {
-		$city_filter = sanitize_text_field( $args['city'] );
-		$events = array_values(
-			array_filter(
-				$events,
-				static function ( $event ) use ( $city_filter ) {
-					return 0 === strcasecmp( (string) $event['city'], $city_filter );
-				}
-			)
-		);
-	}
-
-	usort(
-		$events,
-		static function ( $a, $b ) {
-			return strcmp( $a['start_date'] . ' ' . $a['start_time'], $b['start_date'] . ' ' . $b['start_time'] );
-		}
-	);
-
-	if ( ! empty( $args['count'] ) && (int) $args['count'] > 0 ) {
-		$events = array_slice( $events, 0, (int) $args['count'] );
+		$city = sanitize_text_field( $args['city'] );
+		$events = array_values( array_filter( $events, static function( $event ) use ( $city ) {
+			return ! $city || 0 === strcasecmp( (string) $event['city'], $city );
+		} ) );
 	}
 
 	return $events;
