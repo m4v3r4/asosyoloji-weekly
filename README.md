@@ -84,3 +84,20 @@ Başka bir tema kullanıldığında kendi varsayılan renkleriyle çalışmaya d
 ## Lisans
 
 GPL-3.0-or-later.
+
+
+## Güncellemeler
+
+Eklenti WordPress.org yerine kendi public GitHub deposundaki Release sürümlerini kullanır.
+
+Yeni sürüm yayınlandığında WordPress'in normal eklenti güncelleme sistemi yeni sürümü algılar ve **Eklentiler** ekranında güncelleme bildirimi gösterir.
+
+Release paketi adı:
+
+`asosyoloji-weekly.zip`
+
+Sürüm tag'i ile eklenti header/PHP sürümü aynı olmalıdır. Örneğin:
+
+`v0.1.0`
+
+Tag push edildiğinde repodaki tek release workflow'u kurulabilir ZIP paketini oluşturup GitHub Release'e ekler.
