@@ -34,6 +34,14 @@ function asosyoloji_weekly_assets() {
 		array(),
 		ASOSYOLOJI_WEEKLY_VERSION
 	);
+
+	wp_enqueue_script(
+		'asosyoloji-weekly-frontend',
+		ASOSYOLOJI_WEEKLY_URL . 'assets/frontend.js',
+		array(),
+		ASOSYOLOJI_WEEKLY_VERSION,
+		true
+	);
 }
 add_action( 'wp_enqueue_scripts', 'asosyoloji_weekly_assets' );
 
