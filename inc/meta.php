@@ -9,6 +9,38 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+function asosyoloji_weekly_register_event_meta() {
+	$meta_fields = array(
+		'_aso_event_start_date' => 'string',
+		'_aso_event_start_time' => 'string',
+		'_aso_event_end_date'   => 'string',
+		'_aso_event_end_time'   => 'string',
+		'_aso_event_venue'      => 'string',
+		'_aso_event_city'       => 'string',
+		'_aso_event_organizer'  => 'string',
+		'_aso_event_url'        => 'string',
+		'_aso_event_price'      => 'string',
+		'_aso_event_free'       => 'boolean',
+	);
+
+	foreach ( $meta_fields as $meta_key => $type ) {
+		register_post_meta(
+			'asosyoloji_event',
+			$meta_key,
+			array(
+				'type'              => $type,
+				'single'            => true,
+				'show_in_rest'      => true,
+				'auth_callback'     => static function () {
+					return current_user_can( 'edit_posts' );
+				},
+				'sanitize_callback' => 'boolean' === $type ? 'rest_sanitize_boolean' : 'sanitize_text_field',
+			)
+		);
+	}
+}
+add_action( 'init', 'asosyoloji_weekly_register_event_meta', 20 );
+
 function asosyoloji_weekly_meta_box() {
 	add_meta_box(
 		'asosyoloji-event-details',
