@@ -21,7 +21,7 @@
 
     const editor = useDispatch('core/editor');
 
-    if (postType !== 'asosyoloji_event') {
+    if (postType !== 'event') {
       return null;
     }
 
