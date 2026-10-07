@@ -247,3 +247,85 @@ function asosyoloji_weekly_save_meta( $post_id ) {
 	}
 }
 add_action( 'save_post_event', 'asosyoloji_weekly_save_meta' );
+
+
+function asosyoloji_weekly_location_meta_box() {
+	add_meta_box(
+		'asosyoloji-location-details',
+		__( 'Mekan Bilgileri', 'asosyoloji-weekly' ),
+		'asosyoloji_weekly_location_meta_box_render',
+		'location',
+		'normal',
+		'high'
+	);
+}
+add_action( 'add_meta_boxes', 'asosyoloji_weekly_location_meta_box' );
+
+function asosyoloji_weekly_location_meta_box_render( $post ) {
+	wp_nonce_field( 'asosyoloji_weekly_save_location', 'asosyoloji_weekly_location_nonce' );
+
+	$fields = array(
+		'address'  => get_post_meta( $post->ID, '_location_address', true ),
+		'town'     => get_post_meta( $post->ID, '_location_town', true ),
+		'state'    => get_post_meta( $post->ID, '_location_state', true ),
+		'postcode' => get_post_meta( $post->ID, '_location_postcode', true ),
+		'region'   => get_post_meta( $post->ID, '_location_region', true ),
+		'country'  => get_post_meta( $post->ID, '_location_country', true ),
+	);
+	?>
+	<p>
+		<label for="aso-location-address"><strong><?php esc_html_e( 'Adres', 'asosyoloji-weekly' ); ?></strong></label>
+		<input class="widefat" id="aso-location-address" name="aso_location_address" type="text" value="<?php echo esc_attr( $fields['address'] ); ?>">
+	</p>
+	<p>
+		<label for="aso-location-town"><strong><?php esc_html_e( 'Şehir / İlçe', 'asosyoloji-weekly' ); ?></strong></label>
+		<input class="widefat" id="aso-location-town" name="aso_location_town" type="text" value="<?php echo esc_attr( $fields['town'] ); ?>">
+	</p>
+	<p>
+		<label for="aso-location-state"><strong><?php esc_html_e( 'İl / Bölge', 'asosyoloji-weekly' ); ?></strong></label>
+		<input class="widefat" id="aso-location-state" name="aso_location_state" type="text" value="<?php echo esc_attr( $fields['state'] ); ?>">
+	</p>
+	<p>
+		<label for="aso-location-postcode"><strong><?php esc_html_e( 'Posta kodu', 'asosyoloji-weekly' ); ?></strong></label>
+		<input class="widefat" id="aso-location-postcode" name="aso_location_postcode" type="text" value="<?php echo esc_attr( $fields['postcode'] ); ?>">
+	</p>
+	<p>
+		<label for="aso-location-region"><strong><?php esc_html_e( 'Bölge', 'asosyoloji-weekly' ); ?></strong></label>
+		<input class="widefat" id="aso-location-region" name="aso_location_region" type="text" value="<?php echo esc_attr( $fields['region'] ); ?>">
+	</p>
+	<p>
+		<label for="aso-location-country"><strong><?php esc_html_e( 'Ülke', 'asosyoloji-weekly' ); ?></strong></label>
+		<input class="widefat" id="aso-location-country" name="aso_location_country" type="text" value="<?php echo esc_attr( $fields['country'] ); ?>" placeholder="TR">
+	</p>
+	<?php
+}
+
+function asosyoloji_weekly_save_location_meta( $post_id ) {
+	if (
+		! isset( $_POST['asosyoloji_weekly_location_nonce'] ) ||
+		! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['asosyoloji_weekly_location_nonce'] ) ), 'asosyoloji_weekly_save_location' ) ||
+		! current_user_can( 'edit_post', $post_id ) ||
+		wp_is_post_revision( $post_id )
+	) {
+		return;
+	}
+
+	$fields = array(
+		'aso_location_address'  => '_location_address',
+		'aso_location_town'     => '_location_town',
+		'aso_location_state'    => '_location_state',
+		'aso_location_postcode' => '_location_postcode',
+		'aso_location_region'   => '_location_region',
+		'aso_location_country'  => '_location_country',
+	);
+
+	foreach ( $fields as $input => $meta_key ) {
+		$value = isset( $_POST[ $input ] ) ? sanitize_text_field( wp_unslash( $_POST[ $input ] ) ) : '';
+		if ( '' === $value ) {
+			delete_post_meta( $post_id, $meta_key );
+		} else {
+			update_post_meta( $post_id, $meta_key, $value );
+		}
+	}
+}
+add_action( 'save_post_location', 'asosyoloji_weekly_save_location_meta' );
