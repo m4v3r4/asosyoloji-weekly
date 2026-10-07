@@ -58,7 +58,7 @@ class Asosyoloji_Weekly_Widget extends WP_Widget {
 						'count'   => $count,
 						'city'    => $city,
 						'compact' => true,
-						'active'  => 'week',
+						'active'  => 'month',
 					)
 				)
 			);
