@@ -127,6 +127,13 @@ function asosyoloji_weekly_render_calendar( $args = array() ) {
 	);
 
 	$args  = wp_parse_args( $args, $defaults );
+
+	$requested_month = isset( $_GET['aso_calendar_month'] ) ? sanitize_text_field( wp_unslash( $_GET['aso_calendar_month'] ) ) : '';
+	if ( preg_match( '/^(\d{4})-(\d{2})$/', $requested_month, $matches ) ) {
+		$args['year']  = absint( $matches[1] );
+		$args['month'] = absint( $matches[2] );
+	}
+
 	$year  = max( 2000, absint( $args['year'] ) );
 	$month = min( 12, max( 1, absint( $args['month'] ) ) );
 
@@ -156,6 +163,10 @@ function asosyoloji_weekly_render_calendar( $args = array() ) {
 
 	$days_in_month = (int) wp_date( 't', strtotime( $first_day ) );
 	$start_weekday = (int) wp_date( 'N', strtotime( $first_day ) );
+	$previous_month = wp_date( 'Y-m', strtotime( '-1 month', strtotime( $first_day ) ) );
+	$next_month     = wp_date( 'Y-m', strtotime( '+1 month', strtotime( $first_day ) ) );
+	$previous_url   = add_query_arg( 'aso_calendar_month', $previous_month );
+	$next_url       = add_query_arg( 'aso_calendar_month', $next_month );
 
 	ob_start();
 	?>
@@ -165,7 +176,11 @@ function asosyoloji_weekly_render_calendar( $args = array() ) {
 				<div class="aso-weekly__kicker"><?php esc_html_e( 'Aylık Görünüm', 'asosyoloji-weekly' ); ?></div>
 				<h2 class="aso-calendar__title"><?php echo esc_html( $args['title'] ); ?></h2>
 			</div>
-			<div class="aso-calendar__month"><?php echo esc_html( wp_date( 'F Y', strtotime( $first_day ) ) ); ?></div>
+			<div class="aso-calendar__nav">
+				<a href="<?php echo esc_url( $previous_url ); ?>" aria-label="<?php esc_attr_e( 'Önceki ay', 'asosyoloji-weekly' ); ?>">←</a>
+				<div class="aso-calendar__month"><?php echo esc_html( wp_date( 'F Y', strtotime( $first_day ) ) ); ?></div>
+				<a href="<?php echo esc_url( $next_url ); ?>" aria-label="<?php esc_attr_e( 'Sonraki ay', 'asosyoloji-weekly' ); ?>">→</a>
+			</div>
 		</div>
 
 		<div class="aso-calendar__weekdays" aria-hidden="true">
