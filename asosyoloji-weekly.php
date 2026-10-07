@@ -63,7 +63,7 @@ function asosyoloji_weekly_editor_assets( $hook ) {
 	}
 
 	$screen = get_current_screen();
-	if ( ! $screen || 'event' !== $screen->post_type || ! $screen->is_block_editor() ) {
+	if ( ! $screen || 'em_event' !== $screen->post_type || ! $screen->is_block_editor() ) {
 		return;
 	}
 
@@ -75,37 +75,5 @@ function asosyoloji_weekly_editor_assets( $hook ) {
 		true
 	);
 
-	$locations = get_posts(
-		array(
-			'post_type'      => 'location',
-			'post_status'    => 'publish',
-			'posts_per_page' => -1,
-			'orderby'        => 'title',
-			'order'          => 'ASC',
-		)
-	);
-
-	$options = array(
-		array(
-			'label' => __( 'Mekan seçin', 'asosyoloji-weekly' ),
-			'value' => '0',
-		),
-	);
-
-	foreach ( $locations as $location ) {
-		$location_value = absint( get_post_meta( $location->ID, '_location_id', true ) ) ?: $location->ID;
-		$options[] = array(
-			'label' => $location->post_title,
-			'value' => (string) $location_value,
-		);
-	}
-
-	wp_localize_script(
-		'asosyoloji-weekly-editor',
-		'asosyolojiWeeklyEditor',
-		array(
-			'locations' => $options,
-		)
-	);
 }
 add_action( 'admin_enqueue_scripts', 'asosyoloji_weekly_editor_assets' );
