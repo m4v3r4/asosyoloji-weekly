@@ -134,3 +134,14 @@ Tag push edildiğinde repodaki tek release workflow'u kurulabilir ZIP paketini o
 - Eski Events Manager \`wp_em_locations\` verisini okuyabilen uyumluluk katmanı eklendi.
 - Haftalık / aylık widget görünümü Asosyoloji temasının tipografi, renk ve koyu mod değişkenleriyle uyumlu hale getirildi.
 - Aylık takvimde güncel gün vurgusu ve daha editoryal takvim görünümü eklendi.
+
+
+## 0.1.4
+
+- WordPress export dosyasındaki gerçek Asosyoloji veri modeli desteklenir.
+- Etkinlik içerik tipi `em_event` olarak değiştirildi.
+- Etkinlik türleri `em_event_type`, mekanlar `em_venue` taksonomilerinden okunur.
+- Tarih ve saat verileri `em_start_date_time`, `em_end_date_time`, `em_start_time`, `em_end_time` alanlarından okunur.
+- WordPress Importer ile daha önce içe alınmış `em_event` kayıtları yeniden import gerekmeden görünür.
+- Gutenberg etkinlik paneli `em_*` meta alanlarını doğrudan düzenler.
+- Önceki eklenti sürümlerinde oluşturulan `event` / `asosyoloji_event` kayıtları `em_event` modeline taşınır.
