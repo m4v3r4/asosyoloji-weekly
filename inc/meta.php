@@ -182,7 +182,8 @@ function asosyoloji_weekly_meta_box_render( $post ) {
 			<select class="widefat" name="aso_event_location_id">
 				<option value="0"><?php esc_html_e( 'Mekan seçin', 'asosyoloji-weekly' ); ?></option>
 				<?php foreach ( $locations as $location ) : ?>
-					<option value="<?php echo esc_attr( $location->ID ); ?>" <?php selected( $fields['location'], $location->ID ); ?>><?php echo esc_html( $location->post_title ); ?></option>
+					<?php $location_value = absint( get_post_meta( $location->ID, '_location_id', true ) ) ?: $location->ID; ?>
+					<option value="<?php echo esc_attr( $location_value ); ?>" <?php selected( $fields['location'], $location_value ); ?>><?php echo esc_html( $location->post_title ); ?></option>
 				<?php endforeach; ?>
 			</select>
 			<small><a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=location' ) ); ?>"><?php esc_html_e( 'Yeni mekan ekle', 'asosyoloji-weekly' ); ?></a></small>
