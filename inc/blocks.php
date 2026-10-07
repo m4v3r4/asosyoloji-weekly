@@ -75,13 +75,25 @@ function asosyoloji_weekly_register_blocks() {
 add_action( 'init', 'asosyoloji_weekly_register_blocks' );
 
 function asosyoloji_weekly_render_list_block( $attributes ) {
-	return asosyoloji_weekly_render_list(
+	if ( 'upcoming' === ( $attributes['mode'] ?? '' ) ) {
+		return asosyoloji_weekly_render_list(
+			array(
+				'title'   => sanitize_text_field( $attributes['title'] ?? __( 'Haftalık', 'asosyoloji-weekly' ) ),
+				'mode'    => 'upcoming',
+				'count'   => absint( $attributes['count'] ?? 10 ),
+				'city'    => sanitize_text_field( $attributes['city'] ?? '' ),
+				'compact' => ! empty( $attributes['compact'] ),
+			)
+		);
+	}
+
+	return asosyoloji_weekly_render_switcher(
 		array(
-			'title'   => sanitize_text_field( $attributes['title'] ?? __( 'Haftalık', 'asosyoloji-weekly' ) ),
-			'mode'    => 'upcoming' === ( $attributes['mode'] ?? '' ) ? 'upcoming' : 'week',
+			'title'   => sanitize_text_field( $attributes['title'] ?? __( 'Etkinlik Takvimi', 'asosyoloji-weekly' ) ),
 			'count'   => absint( $attributes['count'] ?? 10 ),
 			'city'    => sanitize_text_field( $attributes['city'] ?? '' ),
 			'compact' => ! empty( $attributes['compact'] ),
+			'active'  => 'month' === ( $attributes['mode'] ?? '' ) ? 'month' : 'week',
 		)
 	);
 }
