@@ -32,8 +32,8 @@ function asosyoloji_weekly_render_list( $args = array() ) {
 	$args = wp_parse_args( $args, $defaults );
 
 	if ( 'week' === $args['mode'] ) {
-		$range = asosyoloji_weekly_week_range();
-		$query = asosyoloji_weekly_get_events(
+		$range  = asosyoloji_weekly_week_range();
+		$events = asosyoloji_weekly_collect_events(
 			array(
 				'start'      => $range['start'],
 				'end'        => $range['end'],
@@ -43,7 +43,7 @@ function asosyoloji_weekly_render_list( $args = array() ) {
 			)
 		);
 	} else {
-		$query = asosyoloji_weekly_get_events(
+		$events = asosyoloji_weekly_collect_events(
 			array(
 				'start'      => asosyoloji_weekly_today(),
 				'count'      => $args['count'],
@@ -71,12 +71,8 @@ function asosyoloji_weekly_render_list( $args = array() ) {
 		</div>
 
 		<div class="aso-weekly__events">
-			<?php if ( $query->have_posts() ) : ?>
-				<?php
-				while ( $query->have_posts() ) :
-					$query->the_post();
-					$event = asosyoloji_weekly_event_data( get_the_ID() );
-					?>
+			<?php if ( $events ) : ?>
+				<?php foreach ( $events as $event ) : ?>
 					<article class="aso-weekly-event">
 						<time class="aso-weekly-event__date" datetime="<?php echo esc_attr( $event['start_date'] ); ?>">
 							<span class="aso-weekly-event__weekday"><?php echo esc_html( asosyoloji_weekly_format_weekday( $event['start_date'] ) ); ?></span>
@@ -113,15 +109,13 @@ function asosyoloji_weekly_render_list( $args = array() ) {
 							<?php esc_html_e( 'Detay', 'asosyoloji-weekly' ); ?>
 						</a>
 					</article>
-				<?php endwhile; ?>
+				<?php endforeach; ?>
 			<?php else : ?>
 				<p class="aso-weekly__empty"><?php esc_html_e( 'Bu dönem için etkinlik bulunmuyor.', 'asosyoloji-weekly' ); ?></p>
 			<?php endif; ?>
 		</div>
 	</section>
 	<?php
-	wp_reset_postdata();
-
 	return (string) ob_get_clean();
 }
 
@@ -138,7 +132,7 @@ function asosyoloji_weekly_render_calendar( $args = array() ) {
 
 	$first_day = sprintf( '%04d-%02d-01', $year, $month );
 	$last_day  = wp_date( 'Y-m-t', strtotime( $first_day ) );
-	$query     = asosyoloji_weekly_get_events(
+	$events = asosyoloji_weekly_collect_events(
 		array(
 			'start' => $first_day,
 			'end'   => $last_day,
@@ -147,13 +141,18 @@ function asosyoloji_weekly_render_calendar( $args = array() ) {
 	);
 
 	$events_by_day = array();
-	while ( $query->have_posts() ) {
-		$query->the_post();
-		$event = asosyoloji_weekly_event_data( get_the_ID() );
-		$day   = (int) wp_date( 'j', strtotime( $event['start_date'] ) );
-		$events_by_day[ $day ][] = $event;
+	foreach ( $events as $event ) {
+		$event_start = max( $event['start_date'], $first_day );
+		$event_end   = min( $event['end_date'] ? $event['end_date'] : $event['start_date'], $last_day );
+		$cursor      = strtotime( $event_start );
+		$end_cursor  = strtotime( $event_end );
+
+		while ( $cursor && $cursor <= $end_cursor ) {
+			$day = (int) wp_date( 'j', $cursor );
+			$events_by_day[ $day ][] = $event;
+			$cursor = strtotime( '+1 day', $cursor );
+		}
 	}
-	wp_reset_postdata();
 
 	$days_in_month = (int) wp_date( 't', strtotime( $first_day ) );
 	$start_weekday = (int) wp_date( 'N', strtotime( $first_day ) );
