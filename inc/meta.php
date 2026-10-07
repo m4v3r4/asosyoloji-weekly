@@ -25,7 +25,7 @@ function asosyoloji_weekly_register_event_meta() {
 
 	foreach ( $meta_fields as $meta_key => $type ) {
 		register_post_meta(
-			'asosyoloji_event',
+			'event',
 			$meta_key,
 			array(
 				'type'              => $type,
@@ -46,7 +46,7 @@ function asosyoloji_weekly_meta_box() {
 		'asosyoloji-event-details',
 		__( 'Etkinlik Bilgileri', 'asosyoloji-weekly' ),
 		'asosyoloji_weekly_meta_box_render',
-		'asosyoloji_event',
+		'event',
 		'normal',
 		'high'
 	);
@@ -152,4 +152,4 @@ function asosyoloji_weekly_save_meta( $post_id ) {
 
 	update_post_meta( $post_id, '_aso_event_free', isset( $_POST['aso_event_free'] ) ? '1' : '0' );
 }
-add_action( 'save_post_asosyoloji_event', 'asosyoloji_weekly_save_meta' );
+add_action( 'save_post_event', 'asosyoloji_weekly_save_meta' );
