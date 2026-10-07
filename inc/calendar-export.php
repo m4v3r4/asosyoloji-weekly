@@ -65,7 +65,7 @@ function asosyoloji_weekly_google_calendar_url( $post_id ) {
 function asosyoloji_weekly_ics_endpoint() {
 	$post_id = isset( $_GET['event_ics'] ) ? absint( $_GET['event_ics'] ) : 0;
 
-	if ( ! $post_id || 'event' !== get_post_type( $post_id ) || 'publish' !== get_post_status( $post_id ) ) {
+	if ( ! $post_id || 'em_event' !== get_post_type( $post_id ) || 'publish' !== get_post_status( $post_id ) ) {
 		return;
 	}
 
