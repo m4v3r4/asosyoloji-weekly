@@ -32,7 +32,7 @@ function asosyoloji_weekly_event_datetime( $date, $time = '', $utc = false ) {
 function asosyoloji_weekly_ics_url( $post_id ) {
 	return add_query_arg(
 		array(
-			'asosyoloji_event_ics' => absint( $post_id ),
+			'event_ics' => absint( $post_id ),
 		),
 		home_url( '/' )
 	);
@@ -63,9 +63,9 @@ function asosyoloji_weekly_google_calendar_url( $post_id ) {
 }
 
 function asosyoloji_weekly_ics_endpoint() {
-	$post_id = isset( $_GET['asosyoloji_event_ics'] ) ? absint( $_GET['asosyoloji_event_ics'] ) : 0;
+	$post_id = isset( $_GET['event_ics'] ) ? absint( $_GET['event_ics'] ) : 0;
 
-	if ( ! $post_id || 'asosyoloji_event' !== get_post_type( $post_id ) || 'publish' !== get_post_status( $post_id ) ) {
+	if ( ! $post_id || 'event' !== get_post_type( $post_id ) || 'publish' !== get_post_status( $post_id ) ) {
 		return;
 	}
 
