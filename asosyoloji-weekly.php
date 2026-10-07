@@ -25,6 +25,7 @@ require_once ASOSYOLOJI_WEEKLY_DIR . 'inc/blocks.php';
 require_once ASOSYOLOJI_WEEKLY_DIR . 'inc/widget.php';
 require_once ASOSYOLOJI_WEEKLY_DIR . 'inc/calendar-export.php';
 require_once ASOSYOLOJI_WEEKLY_DIR . 'inc/single-event.php';
+require_once ASOSYOLOJI_WEEKLY_DIR . 'inc/github-updater.php';
 
 function asosyoloji_weekly_assets() {
 	wp_enqueue_style(
