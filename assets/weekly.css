@@ -683,3 +683,111 @@ html[data-theme="dark"] .aso-weekly-event:hover {
     width: 8px;
   }
 }
+
+
+/* Responsive event presentation: desktop calendar, mobile list */
+@media (min-width: 761px) {
+  .aso-weekly-switcher__panel[data-aso-calendar-panel="month"] {
+    overflow: visible;
+  }
+
+  .aso-calendar {
+    overflow: visible;
+  }
+
+  .aso-calendar__weekdays,
+  .aso-calendar__grid {
+    min-width: 0;
+  }
+
+  .aso-calendar__day {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .aso-weekly-switcher {
+    overflow: visible;
+  }
+
+  .aso-weekly-switcher__bar {
+    display: none;
+  }
+
+  .aso-weekly-switcher__panel[data-aso-calendar-panel="week"] {
+    display: block !important;
+    overflow: visible;
+  }
+
+  .aso-weekly-switcher__panel[data-aso-calendar-panel="month"] {
+    display: none !important;
+  }
+
+  .aso-weekly {
+    overflow: visible;
+  }
+
+  .aso-weekly__header {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .aso-weekly__title {
+    font-size: clamp(1.45rem, 8vw, 2rem);
+  }
+
+  .aso-weekly__range {
+    flex: 0 0 auto;
+    font-size: .65rem;
+    text-align: right;
+  }
+
+  .aso-weekly-event,
+  .aso-weekly--compact .aso-weekly-event {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+    padding: 16px 0;
+    background: transparent;
+  }
+
+  .aso-weekly-event__date,
+  .aso-weekly--compact .aso-weekly-event__date {
+    min-width: 0;
+    min-height: 68px;
+    padding: 10px 6px;
+  }
+
+  .aso-weekly-event.is-multiday .aso-weekly-event__date {
+    min-width: 0;
+  }
+
+  .aso-weekly-event__range-label {
+    font-size: .7rem;
+  }
+
+  .aso-weekly-event__title,
+  .aso-weekly--compact .aso-weekly-event__title {
+    margin-top: 4px;
+    font-size: 1rem;
+    line-height: 1.14;
+  }
+
+  .aso-weekly-event__meta {
+    gap: 3px 9px;
+    font-size: .7rem;
+  }
+
+  .aso-weekly-event__meta span + span::before {
+    margin-right: 9px;
+  }
+
+  .aso-weekly-event__excerpt,
+  .aso-weekly-event__more {
+    display: none;
+  }
+}
