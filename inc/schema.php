@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 function asosyoloji_weekly_event_schema() {
-	if ( ! is_singular( 'event' ) ) {
+	if ( ! is_singular( 'em_event' ) ) {
 		return;
 	}
 
