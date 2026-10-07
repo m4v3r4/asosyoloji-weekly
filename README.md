@@ -153,3 +153,12 @@ Tag push edildiğinde repodaki tek release workflow'u kurulabilir ZIP paketini o
 - Görünüm seçici widget, shortcode ve Gutenberg etkinlik bloğunda ortak olarak kullanılır.
 - Birkaç gün süren etkinlikler haftalık görünümde tek kayıt ve tek tarih aralığı olarak gösterilir.
 - Aylık görünümde çok günlük etkinlikler başlangıç, devam ve bitiş hücreleri boyunca birleşik şerit görünümüyle sunulur.
+
+
+## 0.1.6
+
+- Masaüstünde etkinlik bileşeni aylık takvim görünümünü varsayılan olarak açar.
+- Ziyaretçi masaüstünde Haftalık / Aylık görünümler arasında geçiş yapabilir.
+- Mobilde aylık grid gizlenir ve etkinlikler otomatik olarak sade haftalık liste halinde gösterilir.
+- Mobil etkinlik kartları daha sıkı tarih, başlık ve meta düzenine geçirildi.
+- Çok günlük etkinlikler mobil listede tek tarih aralığı, masaüstü takvimde birleşik şerit olarak kalır.
