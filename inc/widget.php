@@ -51,71 +51,18 @@ class Asosyoloji_Weekly_Widget extends WP_Widget {
 				)
 			);
 		} else {
-			?>
-			<section class="aso-weekly-switcher" id="<?php echo esc_attr( $widget_id ); ?>" data-aso-calendar-switcher>
-				<div class="aso-weekly-switcher__bar" role="tablist" aria-label="<?php esc_attr_e( 'Takvim görünümü', 'asosyoloji-weekly' ); ?>">
-					<button
-						type="button"
-						class="aso-weekly-switcher__tab is-active"
-						role="tab"
-						aria-selected="true"
-						aria-controls="<?php echo esc_attr( $widget_id ); ?>-week"
-						data-aso-calendar-tab="week"
-					>
-						<?php esc_html_e( 'Haftalık', 'asosyoloji-weekly' ); ?>
-					</button>
-					<button
-						type="button"
-						class="aso-weekly-switcher__tab"
-						role="tab"
-						aria-selected="false"
-						aria-controls="<?php echo esc_attr( $widget_id ); ?>-month"
-						data-aso-calendar-tab="month"
-					>
-						<?php esc_html_e( 'Aylık', 'asosyoloji-weekly' ); ?>
-					</button>
-				</div>
+			echo wp_kses_post(
+				asosyoloji_weekly_render_switcher(
+					array(
+						'title'   => $title,
+						'count'   => $count,
+						'city'    => $city,
+						'compact' => true,
+						'active'  => 'week',
+					)
+				)
+			);
 
-				<div
-					id="<?php echo esc_attr( $widget_id ); ?>-week"
-					class="aso-weekly-switcher__panel is-active"
-					role="tabpanel"
-					data-aso-calendar-panel="week"
-				>
-					<?php
-					echo wp_kses_post(
-						asosyoloji_weekly_render_list(
-							array(
-								'title'   => $title,
-								'mode'    => 'week',
-								'count'   => $count,
-								'city'    => $city,
-								'compact' => true,
-							)
-						)
-					);
-					?>
-				</div>
-
-				<div
-					id="<?php echo esc_attr( $widget_id ); ?>-month"
-					class="aso-weekly-switcher__panel"
-					role="tabpanel"
-					hidden
-					data-aso-calendar-panel="month"
-				>
-					<?php
-					echo wp_kses_post(
-						asosyoloji_weekly_render_calendar(
-							array(
-								'title' => $title,
-							)
-						)
-					);
-					?>
-				</div>
-			</section>
-			<?php
 		}
 
 		echo wp_kses_post( $args['after_widget'] );
