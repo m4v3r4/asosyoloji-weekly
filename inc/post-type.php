@@ -9,6 +9,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+function asosyoloji_weekly_register_legacy_model() {
+	if ( get_option( 'asosyoloji_weekly_event_model_migrated' ) ) {
+		return;
+	}
+
+	if ( ! post_type_exists( 'asosyoloji_event' ) ) {
+		register_post_type(
+			'asosyoloji_event',
+			array(
+				'public'  => false,
+				'show_ui' => false,
+				'supports' => array( 'title', 'editor', 'excerpt', 'thumbnail', 'author', 'comments' ),
+			)
+		);
+	}
+
+	if ( ! taxonomy_exists( 'asosyoloji_event_type' ) ) {
+		register_taxonomy(
+			'asosyoloji_event_type',
+			'asosyoloji_event',
+			array(
+				'public'  => false,
+				'show_ui' => false,
+			)
+		);
+	}
+}
+add_action( 'init', 'asosyoloji_weekly_register_legacy_model', 1 );
+
 function asosyoloji_weekly_register_post_type() {
 	if ( ! post_type_exists( 'event' ) ) {
 		register_post_type(
