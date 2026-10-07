@@ -1,6 +1,6 @@
 <?php
 /**
- * Event post type.
+ * Original Asosyoloji event model.
  *
  * @package AsosyolojiWeekly
  */
@@ -9,39 +9,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-function asosyoloji_weekly_register_legacy_model() {
-	if ( get_option( 'asosyoloji_weekly_event_model_migrated' ) ) {
-		return;
-	}
-
-	if ( ! post_type_exists( 'asosyoloji_event' ) ) {
-		register_post_type(
-			'asosyoloji_event',
-			array(
-				'public'  => false,
-				'show_ui' => false,
-				'supports' => array( 'title', 'editor', 'excerpt', 'thumbnail', 'author', 'comments' ),
-			)
-		);
-	}
-
-	if ( ! taxonomy_exists( 'asosyoloji_event_type' ) ) {
-		register_taxonomy(
-			'asosyoloji_event_type',
-			'asosyoloji_event',
-			array(
-				'public'  => false,
-				'show_ui' => false,
-			)
-		);
-	}
-}
-add_action( 'init', 'asosyoloji_weekly_register_legacy_model', 1 );
-
 function asosyoloji_weekly_register_post_type() {
-	if ( ! post_type_exists( 'event' ) ) {
+	if ( ! post_type_exists( 'em_event' ) ) {
 		register_post_type(
-			'event',
+			'em_event',
 			array(
 				'labels' => array(
 					'name'          => __( 'Etkinlikler', 'asosyoloji-weekly' ),
@@ -64,30 +35,10 @@ function asosyoloji_weekly_register_post_type() {
 		);
 	}
 
-	if ( ! post_type_exists( 'location' ) ) {
-		register_post_type(
-			'location',
-			array(
-				'labels' => array(
-					'name'          => __( 'Mekanlar', 'asosyoloji-weekly' ),
-					'singular_name' => __( 'Mekan', 'asosyoloji-weekly' ),
-					'add_new_item'  => __( 'Yeni Mekan Ekle', 'asosyoloji-weekly' ),
-					'edit_item'     => __( 'Mekanı Düzenle', 'asosyoloji-weekly' ),
-				),
-				'public'        => true,
-				'show_in_rest'  => true,
-				'show_in_menu'  => 'edit.php?post_type=event',
-				'has_archive'   => false,
-				'rewrite'       => array( 'slug' => 'location', 'with_front' => false ),
-				'supports'      => array( 'title', 'editor', 'excerpt', 'thumbnail' ),
-			)
-		);
-	}
-
-	if ( ! taxonomy_exists( 'event-categories' ) ) {
+	if ( ! taxonomy_exists( 'em_event_type' ) ) {
 		register_taxonomy(
-			'event-categories',
-			'event',
+			'em_event_type',
+			'em_event',
 			array(
 				'labels' => array(
 					'name'          => __( 'Etkinlik Türleri', 'asosyoloji-weekly' ),
@@ -96,67 +47,86 @@ function asosyoloji_weekly_register_post_type() {
 				'public'       => true,
 				'show_in_rest' => true,
 				'hierarchical' => true,
-				'rewrite'      => array( 'slug' => 'events/categories', 'with_front' => false ),
+				'rewrite'      => array( 'slug' => 'event-type', 'with_front' => false ),
 			)
 		);
 	} else {
-		register_taxonomy_for_object_type( 'event-categories', 'event' );
+		register_taxonomy_for_object_type( 'em_event_type', 'em_event' );
 	}
 
-	if ( ! taxonomy_exists( 'event-tags' ) ) {
+	if ( ! taxonomy_exists( 'em_venue' ) ) {
 		register_taxonomy(
-			'event-tags',
-			'event',
+			'em_venue',
+			'em_event',
 			array(
 				'labels' => array(
-					'name'          => __( 'Etkinlik Etiketleri', 'asosyoloji-weekly' ),
-					'singular_name' => __( 'Etkinlik Etiketi', 'asosyoloji-weekly' ),
+					'name'          => __( 'Mekanlar', 'asosyoloji-weekly' ),
+					'singular_name' => __( 'Mekan', 'asosyoloji-weekly' ),
 				),
 				'public'       => true,
 				'show_in_rest' => true,
 				'hierarchical' => false,
-				'rewrite'      => array( 'slug' => 'events/tags', 'with_front' => false ),
+				'rewrite'      => array( 'slug' => 'venue', 'with_front' => false ),
 			)
 		);
 	} else {
-		register_taxonomy_for_object_type( 'event-tags', 'event' );
+		register_taxonomy_for_object_type( 'em_venue', 'em_event' );
 	}
 }
 add_action( 'init', 'asosyoloji_weekly_register_post_type', 5 );
 
-function asosyoloji_weekly_migrate_old_post_type() {
-	if ( get_option( 'asosyoloji_weekly_event_model_migrated' ) ) {
+/**
+ * Move records created by early plugin versions to the original site's em_event model.
+ */
+function asosyoloji_weekly_migrate_plugin_events() {
+	if ( get_option( 'asosyoloji_weekly_em_model_migrated' ) ) {
 		return;
 	}
 
-	$old_posts = get_posts(
-		array(
-			'post_type'      => 'asosyoloji_event',
-			'post_status'    => 'any',
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-		)
-	);
+	$legacy_types = array( 'event', 'asosyoloji_event' );
 
-	foreach ( $old_posts as $post_id ) {
-		$old_terms = wp_get_post_terms( $post_id, 'asosyoloji_event_type', array( 'fields' => 'names' ) );
+	foreach ( $legacy_types as $legacy_type ) {
+		if ( ! post_type_exists( $legacy_type ) ) {
+			continue;
+		}
 
-		wp_update_post(
+		$ids = get_posts(
 			array(
-				'ID'        => $post_id,
-				'post_type' => 'event',
+				'post_type'      => $legacy_type,
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
 			)
 		);
 
-		if ( ! is_wp_error( $old_terms ) && $old_terms ) {
-			wp_set_object_terms( $post_id, $old_terms, 'event-categories', false );
+		foreach ( $ids as $post_id ) {
+			$type_names = array();
+			foreach ( array( 'event-categories', 'event_category', 'asosyoloji_event_type' ) as $taxonomy ) {
+				if ( taxonomy_exists( $taxonomy ) ) {
+					$names = wp_get_post_terms( $post_id, $taxonomy, array( 'fields' => 'names' ) );
+					if ( ! is_wp_error( $names ) ) {
+						$type_names = array_merge( $type_names, $names );
+					}
+				}
+			}
+
+			wp_update_post(
+				array(
+					'ID'        => $post_id,
+					'post_type' => 'em_event',
+				)
+			);
+
+			if ( $type_names ) {
+				wp_set_object_terms( $post_id, array_values( array_unique( $type_names ) ), 'em_event_type', false );
+			}
 		}
 	}
 
-	update_option( 'asosyoloji_weekly_event_model_migrated', ASOSYOLOJI_WEEKLY_VERSION );
+	update_option( 'asosyoloji_weekly_em_model_migrated', ASOSYOLOJI_WEEKLY_VERSION );
 	flush_rewrite_rules( false );
 }
-add_action( 'admin_init', 'asosyoloji_weekly_migrate_old_post_type' );
+add_action( 'admin_init', 'asosyoloji_weekly_migrate_plugin_events', 5 );
 
 function asosyoloji_weekly_event_columns( $columns ) {
 	$columns['aso_event_date']  = __( 'Etkinlik Tarihi', 'asosyoloji-weekly' );
@@ -164,20 +134,13 @@ function asosyoloji_weekly_event_columns( $columns ) {
 	$columns['aso_event_place'] = __( 'Yer', 'asosyoloji-weekly' );
 	return $columns;
 }
-add_filter( 'manage_event_posts_columns', 'asosyoloji_weekly_event_columns' );
+add_filter( 'manage_em_event_posts_columns', 'asosyoloji_weekly_event_columns' );
 
 function asosyoloji_weekly_event_column_content( $column, $post_id ) {
 	$event = asosyoloji_weekly_event_data( $post_id );
 
 	if ( 'aso_event_date' === $column ) {
-		if ( $event['start_date'] ) {
-			echo esc_html( wp_date( 'd.m.Y', strtotime( $event['start_date'] ) ) );
-			if ( $event['end_date'] && $event['end_date'] !== $event['start_date'] ) {
-				echo ' – ' . esc_html( wp_date( 'd.m.Y', strtotime( $event['end_date'] ) ) );
-			}
-		} else {
-			echo '<strong style="color:#b32d2e">' . esc_html__( 'Tarih girilmemiş', 'asosyoloji-weekly' ) . '</strong>';
-		}
+		echo $event['start_date'] ? esc_html( wp_date( 'd.m.Y', strtotime( $event['start_date'] ) ) ) : '<strong style="color:#b32d2e">' . esc_html__( 'Tarih girilmemiş', 'asosyoloji-weekly' ) . '</strong>';
 	}
 
 	if ( 'aso_event_time' === $column ) {
@@ -185,8 +148,7 @@ function asosyoloji_weekly_event_column_content( $column, $post_id ) {
 	}
 
 	if ( 'aso_event_place' === $column ) {
-		$place = trim( implode( ', ', array_filter( array( $event['venue'], $event['city'] ) ) ) );
-		echo $place ? esc_html( $place ) : '—';
+		echo $event['venue'] ? esc_html( $event['venue'] ) : '—';
 	}
 }
-add_action( 'manage_event_posts_custom_column', 'asosyoloji_weekly_event_column_content', 10, 2 );
+add_action( 'manage_em_event_posts_custom_column', 'asosyoloji_weekly_event_column_content', 10, 2 );
