@@ -72,7 +72,7 @@ function asosyoloji_weekly_get_events( $args = array() ) {
 		'start'        => asosyoloji_weekly_today(),
 		'end'          => '',
 		'count'        => -1,
-		'event-categories'   => 0,
+		'event_type'     => 0,
 		'city'         => '',
 		'include_past' => false,
 	);
@@ -126,14 +126,6 @@ function asosyoloji_weekly_get_events( $args = array() ) {
 		);
 	}
 
-	if ( $args['city'] ) {
-		$meta_query[] = array(
-			'key'     => '_location_town',
-			'value'   => sanitize_text_field( $args['city'] ),
-			'compare' => '=',
-		);
-	}
-
 	$query_args = array(
 		'post_type'      => 'event',
 		'post_status'    => 'publish',
@@ -147,12 +139,12 @@ function asosyoloji_weekly_get_events( $args = array() ) {
 		'meta_query'     => $meta_query,
 	);
 
-	if ( $args['event-categories'] ) {
+	if ( $args['event_type'] ) {
 		$query_args['tax_query'] = array(
 			array(
 				'taxonomy' => 'event-categories',
 				'field'    => 'term_id',
-				'terms'    => absint( $args['event-categories'] ),
+				'terms'    => absint( $args['event_type'] ),
 			),
 		);
 	}
@@ -236,8 +228,8 @@ function asosyoloji_weekly_event_data( $post_id ) {
 		$post_id,
 		array(
 			'_event_start_date',
+			'_aso_event_start_date',
 			'event_start_date',
-			'_event_start_date',
 			'start_date',
 			'_start_date',
 			'event_date',
@@ -248,8 +240,8 @@ function asosyoloji_weekly_event_data( $post_id ) {
 		$post_id,
 		array(
 			'_event_end_date',
+			'_aso_event_end_date',
 			'event_end_date',
-			'_event_end_date',
 			'end_date',
 			'_end_date',
 		)
@@ -257,9 +249,9 @@ function asosyoloji_weekly_event_data( $post_id ) {
 	$start_time = asosyoloji_weekly_first_meta(
 		$post_id,
 		array(
+			'_event_start_time',
 			'_aso_event_start_time',
 			'event_start_time',
-			'_event_start_time',
 			'start_time',
 			'_start_time',
 		)
@@ -267,9 +259,9 @@ function asosyoloji_weekly_event_data( $post_id ) {
 	$end_time = asosyoloji_weekly_first_meta(
 		$post_id,
 		array(
+			'_event_end_time',
 			'_aso_event_end_time',
 			'event_end_time',
-			'_event_end_time',
 			'end_time',
 			'_end_time',
 		)
@@ -286,12 +278,12 @@ function asosyoloji_weekly_event_data( $post_id ) {
 		'start_time' => asosyoloji_weekly_normalize_time( $start_time ),
 		'end_date'   => asosyoloji_weekly_normalize_date( $end_date ),
 		'end_time'   => asosyoloji_weekly_normalize_time( $end_time ),
-		'venue'      => asosyoloji_weekly_first_meta( $post_id, array( '_aso_event_venue', 'event_venue', '_event_venue', 'venue', '_venue', 'location', '_location' ) ),
-		'city'       => asosyoloji_weekly_first_meta( $post_id, array( '_location_town', 'event_city', '_event_city', 'city', '_city' ) ),
-		'organizer'  => asosyoloji_weekly_first_meta( $post_id, array( '_aso_event_organizer', 'event_organizer', '_event_organizer', 'organizer', '_organizer' ) ),
-		'event_url'  => asosyoloji_weekly_first_meta( $post_id, array( '_aso_event_url', 'event_url', '_event_url', 'url' ) ),
-		'price'      => asosyoloji_weekly_first_meta( $post_id, array( '_aso_event_price', 'event_price', '_event_price', 'price' ) ),
-		'free'       => (bool) asosyoloji_weekly_first_meta( $post_id, array( '_aso_event_free', 'event_free', '_event_free' ) ),
+		'venue'      => $venue,
+		'city'       => $city,
+		'organizer'  => asosyoloji_weekly_first_meta( $post_id, array( '_event_organizer', '_aso_event_organizer', 'event_organizer', 'organizer', '_organizer' ) ),
+		'event_url'  => asosyoloji_weekly_first_meta( $post_id, array( '_event_url', '_aso_event_url', 'event_url', 'url' ) ),
+		'price'      => asosyoloji_weekly_first_meta( $post_id, array( '_event_price', '_aso_event_price', 'event_price', 'price' ) ),
+		'free'       => (bool) asosyoloji_weekly_first_meta( $post_id, array( '_event_free', '_aso_event_free', 'event_free' ) ),
 		'types'      => 'event' === $post_type ? wp_get_post_terms( $post_id, 'event-categories', array( 'fields' => 'names' ) ) : array(),
 	);
 }
@@ -313,6 +305,18 @@ function asosyoloji_weekly_collect_events( $args = array() ) {
 		$unique[ $event['post_type'] . ':' . $event['id'] ] = $event;
 	}
 	$events = array_values( $unique );
+
+	if ( ! empty( $args['city'] ) ) {
+		$city_filter = sanitize_text_field( $args['city'] );
+		$events = array_values(
+			array_filter(
+				$events,
+				static function ( $event ) use ( $city_filter ) {
+					return 0 === strcasecmp( (string) $event['city'], $city_filter );
+				}
+			)
+		);
+	}
 
 	usort(
 		$events,
