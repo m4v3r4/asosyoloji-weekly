@@ -348,7 +348,7 @@ function asosyoloji_weekly_render_switcher( $args = array() ) {
 		'count'   => 10,
 		'city'    => '',
 		'compact' => false,
-		'active'  => 'week',
+		'active'  => 'month',
 	);
 
 	$args      = wp_parse_args( $args, $defaults );
