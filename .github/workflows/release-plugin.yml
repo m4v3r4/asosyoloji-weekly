@@ -1,0 +1,52 @@
+name: Release Plugin
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+
+      - name: Verify version
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          HEADER_VERSION=$(grep -Po "^ \* Version:\s*\K.*" asosyoloji-weekly.php | tr -d '\r')
+          PHP_VERSION=$(grep -Po "ASOSYOLOJI_WEEKLY_VERSION',\s*'\K[^']+" asosyoloji-weekly.php)
+
+          test "$TAG_VERSION" = "$HEADER_VERSION"
+          test "$TAG_VERSION" = "$PHP_VERSION"
+
+      - name: Build plugin ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/asosyoloji-weekly
+          rsync -a ./ build/asosyoloji-weekly/ \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'build'
+
+          cd build
+          zip -qr asosyoloji-weekly.zip asosyoloji-weekly
+          unzip -t asosyoloji-weekly.zip
+
+      - name: Publish GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            build/asosyoloji-weekly.zip \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes
