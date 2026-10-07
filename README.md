@@ -101,3 +101,11 @@ Sürüm tag'i ile eklenti header/PHP sürümü aynı olmalıdır. Örneğin:
 `v0.1.0`
 
 Tag push edildiğinde repodaki tek release workflow'u kurulabilir ZIP paketini oluşturup GitHub Release'e ekler.
+
+
+## 0.1.1
+
+- Gutenberg editörüne **Etkinlik Bilgileri** sağ paneli eklendi.
+- Başlangıç/bitiş tarihi ve saati, mekan, şehir, organizatör, etkinlik bağlantısı, fiyat ve ücretsiz bilgisi doğrudan editörden yönetilebilir.
+- Etkinlik meta alanları WordPress REST API ile güvenli şekilde kaydedilir.
+- Klasik meta box fallback olarak korunur.
