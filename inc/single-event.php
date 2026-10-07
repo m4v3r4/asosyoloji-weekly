@@ -85,7 +85,7 @@ function asosyoloji_weekly_event_details_markup( $post_id ) {
 }
 
 function asosyoloji_weekly_prepend_event_details( $content ) {
-	if ( ! is_singular( 'event' ) || ! in_the_loop() || ! is_main_query() ) {
+	if ( ! is_singular( 'em_event' ) || ! in_the_loop() || ! is_main_query() ) {
 		return $content;
 	}
 
