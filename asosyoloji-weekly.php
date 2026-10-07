@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Asosyoloji Haftalık
  * Description: Asosyoloji için etkinlik, haftalık liste ve takvim altyapısı.
- * Version: 0.1.3
+ * Version: 0.1.4
  * Author: Asosyoloji
  * License: GPL-3.0-or-later
  * Text Domain: asosyoloji-weekly
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ASOSYOLOJI_WEEKLY_VERSION', '0.1.3' );
+define( 'ASOSYOLOJI_WEEKLY_VERSION', '0.1.4' );
 define( 'ASOSYOLOJI_WEEKLY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ASOSYOLOJI_WEEKLY_URL', plugin_dir_url( __FILE__ ) );
 
