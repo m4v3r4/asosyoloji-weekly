@@ -211,11 +211,72 @@ function asosyoloji_weekly_get_legacy_events( $args = array() ) {
 	return $events;
 }
 
+function asosyoloji_weekly_location_data( $location_id ) {
+	$location_id = absint( $location_id );
+
+	if ( ! $location_id ) {
+		return array(
+			'name'    => '',
+			'city'    => '',
+			'address' => '',
+		);
+	}
+
+	$location_post = get_post( $location_id );
+	if ( $location_post && 'location' === $location_post->post_type ) {
+		return array(
+			'name'    => get_the_title( $location_id ),
+			'city'    => get_post_meta( $location_id, '_location_town', true ),
+			'address' => get_post_meta( $location_id, '_location_address', true ),
+		);
+	}
+
+	if ( function_exists( 'em_get_location' ) ) {
+		$em_location = em_get_location( $location_id );
+		if ( $em_location && ! empty( $em_location->location_id ) ) {
+			return array(
+				'name'    => (string) $em_location->location_name,
+				'city'    => (string) $em_location->location_town,
+				'address' => (string) $em_location->location_address,
+			);
+		}
+	}
+
+	global $wpdb;
+	$table = $wpdb->prefix . 'em_locations';
+	$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+
+	if ( $exists === $table ) {
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT location_name, location_town, location_address FROM {$table} WHERE location_id = %d LIMIT 1",
+				$location_id
+			),
+			ARRAY_A
+		);
+
+		if ( $row ) {
+			return array(
+				'name'    => (string) ( $row['location_name'] ?? '' ),
+				'city'    => (string) ( $row['location_town'] ?? '' ),
+				'address' => (string) ( $row['location_address'] ?? '' ),
+			);
+		}
+	}
+
+	return array(
+		'name'    => '',
+		'city'    => '',
+		'address' => '',
+	);
+}
+
 function asosyoloji_weekly_event_data( $post_id ) {
 	$post_type   = get_post_type( $post_id );
-	$location_id = absint( get_post_meta( $post_id, '_location_id', true ) );
-	$venue       = $location_id ? get_the_title( $location_id ) : '';
-	$city        = $location_id ? get_post_meta( $location_id, '_location_town', true ) : '';
+	$location_id   = absint( get_post_meta( $post_id, '_location_id', true ) );
+	$location_data = asosyoloji_weekly_location_data( $location_id );
+	$venue         = $location_data['name'];
+	$city          = $location_data['city'];
 
 	if ( ! $venue ) {
 		$venue = asosyoloji_weekly_first_meta( $post_id, array( '_aso_event_venue', 'event_venue', '_event_venue', 'venue', '_venue', 'location', '_location' ) );
