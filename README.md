@@ -145,3 +145,11 @@ Tag push edildiğinde repodaki tek release workflow'u kurulabilir ZIP paketini o
 - WordPress Importer ile daha önce içe alınmış `em_event` kayıtları yeniden import gerekmeden görünür.
 - Gutenberg etkinlik paneli `em_*` meta alanlarını doğrudan düzenler.
 - Önceki eklenti sürümlerinde oluşturulan `event` / `asosyoloji_event` kayıtları `em_event` modeline taşınır.
+
+
+## 0.1.5
+
+- Ziyaretçiler etkinlik görünümünü sayfadan ayrılmadan **Haftalık / Aylık** olarak değiştirebilir.
+- Görünüm seçici widget, shortcode ve Gutenberg etkinlik bloğunda ortak olarak kullanılır.
+- Birkaç gün süren etkinlikler haftalık görünümde tek kayıt ve tek tarih aralığı olarak gösterilir.
+- Aylık görünümde çok günlük etkinlikler başlangıç, devam ve bitiş hücreleri boyunca birleşik şerit görünümüyle sunulur.
