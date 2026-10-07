@@ -93,9 +93,10 @@ function asosyoloji_weekly_editor_assets( $hook ) {
 	);
 
 	foreach ( $locations as $location ) {
+		$location_value = absint( get_post_meta( $location->ID, '_location_id', true ) ) ?: $location->ID;
 		$options[] = array(
 			'label' => $location->post_title,
-			'value' => (string) $location->ID,
+			'value' => (string) $location_value,
 		);
 	}
 
