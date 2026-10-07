@@ -109,3 +109,14 @@ Tag push edildiğinde repodaki tek release workflow'u kurulabilir ZIP paketini o
 - Başlangıç/bitiş tarihi ve saati, mekan, şehir, organizatör, etkinlik bağlantısı, fiyat ve ücretsiz bilgisi doğrudan editörden yönetilebilir.
 - Etkinlik meta alanları WordPress REST API ile güvenli şekilde kaydedilir.
 - Klasik meta box fallback olarak korunur.
+
+
+## 0.1.2
+
+- Etkinlik sorgusu haftayla veya ayla çakışan çok günlük etkinlikleri de gösterir.
+- Haftalık görünüm bugünden başlayan 7 günlük aralığı kullanır.
+- Eski sitedeki kayıtlı \`event\` içerik tipi için geriye dönük okuma desteği eklendi.
+- Widget artık **Haftalık**, **Aylık** veya **Haftalık + Aylık sekmeli** görünüm sunar.
+- Aylık takvimde önceki ve sonraki ay gezinmesi eklendi.
+- Etkinlik yönetim listesine tarih, saat ve yer sütunları eklendi.
+- Tarih bilgisi olmayan etkinlikler yönetim listesinde açıkça işaretlenir.
