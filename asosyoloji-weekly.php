@@ -47,3 +47,24 @@ function asosyoloji_weekly_deactivate() {
 	flush_rewrite_rules();
 }
 register_deactivation_hook( __FILE__, 'asosyoloji_weekly_deactivate' );
+
+
+function asosyoloji_weekly_editor_assets( $hook ) {
+	if ( ! in_array( $hook, array( 'post.php', 'post-new.php' ), true ) ) {
+		return;
+	}
+
+	$screen = get_current_screen();
+	if ( ! $screen || 'asosyoloji_event' !== $screen->post_type || ! $screen->is_block_editor() ) {
+		return;
+	}
+
+	wp_enqueue_script(
+		'asosyoloji-weekly-editor',
+		ASOSYOLOJI_WEEKLY_URL . 'assets/editor.js',
+		array( 'wp-plugins', 'wp-edit-post', 'wp-components', 'wp-data', 'wp-element' ),
+		ASOSYOLOJI_WEEKLY_VERSION,
+		true
+	);
+}
+add_action( 'admin_enqueue_scripts', 'asosyoloji_weekly_editor_assets' );
