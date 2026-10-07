@@ -12,13 +12,13 @@ jobs:
   syntax:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.0'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '24'
       - name: Lint PHP
         run: find . -type f -name '*.php' -not -path './build/*' -print0 | xargs -0 -n1 php -l
       - name: Check JavaScript syntax
