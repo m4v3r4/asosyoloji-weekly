@@ -89,6 +89,10 @@ function asosyoloji_weekly_prepend_event_details( $content ) {
 		return $content;
 	}
 
+	if ( locate_template( 'single-em_event.php', false, false ) ) {
+		return $content;
+	}
+
 	return asosyoloji_weekly_event_details_markup( get_the_ID() ) . $content;
 }
 add_filter( 'the_content', 'asosyoloji_weekly_prepend_event_details', 8 );

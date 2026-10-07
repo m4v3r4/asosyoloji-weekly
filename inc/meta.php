@@ -15,6 +15,9 @@ function asosyoloji_weekly_register_event_meta() {
 		'em_event_type'      => 'string',
 		'em_venue'           => 'string',
 		'em_organizer'       => 'string',
+		'em_city'            => 'string',
+		'em_event_url'       => 'string',
+		'em_free'            => 'boolean',
 		'em_performer'       => 'string',
 		'em_start_date'      => 'integer',
 		'em_start_time'      => 'string',
@@ -37,7 +40,7 @@ function asosyoloji_weekly_register_event_meta() {
 				'auth_callback'     => static function () {
 					return current_user_can( 'edit_posts' );
 				},
-				'sanitize_callback' => 'boolean' === $type ? 'rest_sanitize_boolean' : ( 'integer' === $type ? 'absint' : 'sanitize_text_field' ),
+				'sanitize_callback' => 'em_event_url' === $key ? 'esc_url_raw' : ( 'boolean' === $type ? 'rest_sanitize_boolean' : ( 'integer' === $type ? 'absint' : 'sanitize_text_field' ) ),
 			)
 		);
 	}
@@ -85,6 +88,22 @@ function asosyoloji_weekly_meta_box_render( $post ) {
 		<p>
 			<label><strong><?php esc_html_e( 'Fiyat / bilet bilgisi', 'asosyoloji-weekly' ); ?></strong></label><br>
 			<input class="widefat" type="text" name="aso_event_price" value="<?php echo esc_attr( $event['price'] ); ?>">
+		</p>
+		<p>
+			<label><strong><?php esc_html_e( 'Şehir', 'asosyoloji-weekly' ); ?></strong></label><br>
+			<input class="widefat" type="text" name="aso_event_city" value="<?php echo esc_attr( $event['city'] ); ?>">
+		</p>
+		<p>
+			<label><strong><?php esc_html_e( 'Organizatör', 'asosyoloji-weekly' ); ?></strong></label><br>
+			<input class="widefat" type="text" name="aso_event_organizer" value="<?php echo esc_attr( $event['organizer'] ); ?>">
+		</p>
+		<p>
+			<label><strong><?php esc_html_e( 'Harici etkinlik bağlantısı', 'asosyoloji-weekly' ); ?></strong></label><br>
+			<input class="widefat" type="url" name="aso_event_url" value="<?php echo esc_attr( $event['event_url'] ); ?>" placeholder="https://">
+		</p>
+		<p>
+			<label><strong><?php esc_html_e( 'Ücretsiz', 'asosyoloji-weekly' ); ?></strong></label><br>
+			<label><input type="checkbox" name="aso_event_free" value="1" <?php checked( ! empty( $event['free'] ) ); ?>> <?php esc_html_e( 'Etkinlik ücretsizdir', 'asosyoloji-weekly' ); ?></label>
 		</p>
 	</div>
 	<p>
@@ -138,6 +157,10 @@ function asosyoloji_weekly_save_meta( $post_id ) {
 	$end_time   = isset( $_POST['aso_event_end_time'] ) ? sanitize_text_field( wp_unslash( $_POST['aso_event_end_time'] ) ) : $start_time;
 	$all_day    = isset( $_POST['aso_event_all_day'] ) ? 1 : 0;
 	$price      = isset( $_POST['aso_event_price'] ) ? sanitize_text_field( wp_unslash( $_POST['aso_event_price'] ) ) : '';
+	$city       = isset( $_POST['aso_event_city'] ) ? sanitize_text_field( wp_unslash( $_POST['aso_event_city'] ) ) : '';
+	$organizer  = isset( $_POST['aso_event_organizer'] ) ? sanitize_text_field( wp_unslash( $_POST['aso_event_organizer'] ) ) : '';
+	$event_url  = isset( $_POST['aso_event_url'] ) ? esc_url_raw( wp_unslash( $_POST['aso_event_url'] ) ) : '';
+	$free       = isset( $_POST['aso_event_free'] ) ? 1 : 0;
 
 	if ( ! $end_date ) {
 		$end_date = $start_date;
@@ -145,6 +168,11 @@ function asosyoloji_weekly_save_meta( $post_id ) {
 
 	$start_ts = asosyoloji_weekly_timestamp_from_fields( $start_date, $start_time );
 	$end_ts   = asosyoloji_weekly_timestamp_from_fields( $end_date, $end_time );
+	if ( $start_ts && ( ! $end_ts || $end_ts < $start_ts ) ) {
+		$end_date = $start_date;
+		$end_time = $start_time;
+		$end_ts   = $start_ts;
+	}
 
 	update_post_meta( $post_id, 'em_start_date_time', $start_ts );
 	update_post_meta( $post_id, 'em_end_date_time', $end_ts );
@@ -154,5 +182,9 @@ function asosyoloji_weekly_save_meta( $post_id ) {
 	update_post_meta( $post_id, 'em_end_time', $end_time ? wp_date( 'h:i A', strtotime( $end_time ) ) : '' );
 	update_post_meta( $post_id, 'em_all_day', $all_day );
 	update_post_meta( $post_id, 'em_fixed_event_price', $price );
+	update_post_meta( $post_id, 'em_city', $city );
+	update_post_meta( $post_id, 'em_organizer', $organizer );
+	update_post_meta( $post_id, 'em_event_url', $event_url );
+	update_post_meta( $post_id, 'em_free', $free );
 }
 add_action( 'save_post_em_event', 'asosyoloji_weekly_save_meta' );

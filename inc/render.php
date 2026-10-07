@@ -264,18 +264,47 @@ function asosyoloji_weekly_render_calendar( $args = array() ) {
 							<?php if ( $event['start_time'] && ( ! $is_multiday || $is_start ) ) : ?>
 								<span><?php echo esc_html( $event['start_time'] ); ?></span>
 							<?php endif; ?>
-							<?php if ( ! $is_multiday || $is_start ) : ?>
+							<span class="aso-calendar__event-title<?php echo $is_multiday && ! $is_start ? ' is-continuation' : ''; ?>">
 								<?php echo esc_html( $event['title'] ); ?>
-							<?php else : ?>
-								<span class="screen-reader-text"><?php echo esc_html( $event['title'] ); ?></span>
-							<?php endif; ?>
+							</span>
 						</a>
 					<?php endforeach; ?>
 					<?php if ( count( $day_events ) > 3 ) : ?>
-						<span class="aso-calendar__more">+<?php echo esc_html( count( $day_events ) - 3 ); ?></span>
+						<details class="aso-calendar__more">
+							<summary>+<?php echo esc_html( count( $day_events ) - 3 ); ?> <?php esc_html_e( 'etkinlik', 'asosyoloji-weekly' ); ?></summary>
+							<div class="aso-calendar__more-list">
+								<?php foreach ( array_slice( $day_events, 3 ) as $event ) : ?>
+									<a href="<?php echo esc_url( $event['url'] ); ?>"><?php echo esc_html( $event['title'] ); ?></a>
+								<?php endforeach; ?>
+							</div>
+						</details>
 					<?php endif; ?>
 				</div>
 			<?php endfor; ?>
+		</div>
+
+		<div class="aso-calendar__mobile-list" aria-label="<?php esc_attr_e( 'Bu ayın etkinlikleri', 'asosyoloji-weekly' ); ?>">
+			<?php if ( $events ) : ?>
+				<?php foreach ( $events as $event ) : ?>
+					<?php $is_multiday = $event['end_date'] && $event['end_date'] !== $event['start_date']; ?>
+					<article class="aso-calendar-mobile-event">
+						<time class="aso-calendar-mobile-event__date" datetime="<?php echo esc_attr( $event['start_date'] ); ?>">
+							<?php echo esc_html( $is_multiday ? asosyoloji_weekly_format_range( $event['start_date'], $event['end_date'] ) : wp_date( 'd M', strtotime( $event['start_date'] ) ) ); ?>
+						</time>
+						<div>
+							<h3><a href="<?php echo esc_url( $event['url'] ); ?>"><?php echo esc_html( $event['title'] ); ?></a></h3>
+							<div class="aso-calendar-mobile-event__meta">
+								<?php echo $event['start_time'] ? esc_html( $event['start_time'] ) : esc_html__( 'Tüm gün', 'asosyoloji-weekly' ); ?>
+								<?php if ( $event['venue'] || $event['city'] ) : ?>
+									<span aria-hidden="true"> · </span><?php echo esc_html( implode( ', ', array_filter( array( $event['venue'], $event['city'] ) ) ) ); ?>
+								<?php endif; ?>
+							</div>
+						</div>
+					</article>
+				<?php endforeach; ?>
+			<?php else : ?>
+				<p class="aso-weekly__empty"><?php esc_html_e( 'Bu ay için etkinlik bulunmuyor.', 'asosyoloji-weekly' ); ?></p>
+			<?php endif; ?>
 		</div>
 	</section>
 	<?php

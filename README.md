@@ -162,3 +162,13 @@ Tag push edildiğinde repodaki tek release workflow'u kurulabilir ZIP paketini o
 - Mobilde aylık grid gizlenir ve etkinlikler otomatik olarak sade haftalık liste halinde gösterilir.
 - Mobil etkinlik kartları daha sıkı tarih, başlık ve meta düzenine geçirildi.
 - Çok günlük etkinlikler mobil listede tek tarih aralığı, masaüstü takvimde birleşik şerit olarak kalır.
+
+
+## 0.1.7
+
+- Tekil etkinlik sayfalarında içerik filtresi döngüsüne yol açan özet üretimi düzeltildi.
+- Aylık takvim mobilde otomatik olarak erişilebilir etkinlik listesine dönüşür.
+- Takvimde gizlenen ek etkinlikler açılır bağlantı listesiyle erişilebilir hale getirildi.
+- Şehir, organizatör, harici etkinlik bağlantısı ve ücretsiz bilgisi editöre ve veri modeline bağlandı.
+- Geçersiz tarih aralıkları düzeltilir; tüm gün ICS/Google Calendar çıktıları doğru bitiş tarihi kullanır.
+- PHP ve JavaScript sözdizimi kontrolleri GitHub Actions kalite kapısına eklendi.

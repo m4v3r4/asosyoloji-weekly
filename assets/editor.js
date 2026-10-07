@@ -112,6 +112,27 @@
         value: meta.em_fixed_event_price || '',
         onChange: function (v) { patch({ em_fixed_event_price: v }); }
       }),
+      el(ToggleControl, {
+        label: 'Etkinlik ücretsizdir',
+        checked: !!meta.em_free,
+        onChange: function (v) { patch({ em_free: !!v }); }
+      }),
+      el(TextControl, {
+        label: 'Şehir',
+        value: meta.em_city || '',
+        onChange: function (v) { patch({ em_city: v }); }
+      }),
+      el(TextControl, {
+        label: 'Organizatör',
+        value: meta.em_organizer || '',
+        onChange: function (v) { patch({ em_organizer: v }); }
+      }),
+      el(TextControl, {
+        label: 'Harici etkinlik bağlantısı',
+        type: 'url',
+        value: meta.em_event_url || '',
+        onChange: function (v) { patch({ em_event_url: v }); }
+      }),
       el('p', { className: 'components-base-control__help' }, 'Etkinlik türü ve mekan için belge ayarlarındaki Etkinlik Türleri ve Mekanlar alanlarını kullanın.')
     );
   }

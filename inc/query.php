@@ -28,24 +28,34 @@ function asosyoloji_weekly_event_data( $post_id ) {
 
 	$venues = wp_get_post_terms( $post_id, 'em_venue', array( 'fields' => 'names' ) );
 	$types  = wp_get_post_terms( $post_id, 'em_event_type', array( 'fields' => 'names' ) );
+	$raw_excerpt = get_post_field( 'post_excerpt', $post_id );
+	if ( ! $raw_excerpt ) {
+		$raw_excerpt = wp_trim_words(
+			wp_strip_all_tags( strip_shortcodes( (string) get_post_field( 'post_content', $post_id ) ) ),
+			40
+		);
+	}
+
+	$venue = ( ! is_wp_error( $venues ) && $venues ) ? $venues[0] : get_post_meta( $post_id, 'em_venue', true );
+	$event_url = esc_url_raw( get_post_meta( $post_id, 'em_event_url', true ) );
 
 	return array(
 		'id'         => absint( $post_id ),
 		'post_type'  => 'em_event',
 		'title'      => get_the_title( $post_id ),
 		'url'        => get_permalink( $post_id ),
-		'excerpt'    => get_the_excerpt( $post_id ),
+		'excerpt'    => $raw_excerpt,
 		'image'      => get_the_post_thumbnail_url( $post_id, 'large' ),
 		'start_date' => $start_date,
 		'start_time' => $start_time,
 		'end_date'   => $end_date,
 		'end_time'   => $end_time,
-		'venue'      => ( ! is_wp_error( $venues ) && $venues ) ? $venues[0] : '',
-		'city'       => '',
-		'organizer'  => '',
-		'event_url'  => get_permalink( $post_id ),
+		'venue'      => sanitize_text_field( $venue ),
+		'city'       => sanitize_text_field( get_post_meta( $post_id, 'em_city', true ) ),
+		'organizer'  => sanitize_text_field( get_post_meta( $post_id, 'em_organizer', true ) ),
+		'event_url'  => $event_url,
 		'price'      => get_post_meta( $post_id, 'em_fixed_event_price', true ),
-		'free'       => false,
+		'free'       => (bool) get_post_meta( $post_id, 'em_free', true ),
 		'all_day'    => $all_day,
 		'types'      => ( ! is_wp_error( $types ) ) ? $types : array(),
 	);

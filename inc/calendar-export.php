@@ -41,12 +41,17 @@ function asosyoloji_weekly_ics_url( $post_id ) {
 function asosyoloji_weekly_google_calendar_url( $post_id ) {
 	$event = asosyoloji_weekly_event_data( $post_id );
 
-	$start = asosyoloji_weekly_event_datetime( $event['start_date'], $event['start_time'], true );
-	$end   = asosyoloji_weekly_event_datetime(
-		$event['end_date'] ? $event['end_date'] : $event['start_date'],
-		$event['end_time'] ? $event['end_time'] : $event['start_time'],
-		true
-	);
+	if ( $event['all_day'] ) {
+		$start = str_replace( '-', '', $event['start_date'] );
+		$end   = gmdate( 'Ymd', strtotime( '+1 day', strtotime( $event['end_date'] ? $event['end_date'] : $event['start_date'] ) ) );
+	} else {
+		$start = asosyoloji_weekly_event_datetime( $event['start_date'], $event['start_time'], true );
+		$end   = asosyoloji_weekly_event_datetime(
+			$event['end_date'] ? $event['end_date'] : $event['start_date'],
+			$event['end_time'] ? $event['end_time'] : $event['start_time'],
+			true
+		);
+	}
 
 	$location = trim( implode( ', ', array_filter( array( $event['venue'], $event['city'] ) ) ) );
 
@@ -70,12 +75,18 @@ function asosyoloji_weekly_ics_endpoint() {
 	}
 
 	$event = asosyoloji_weekly_event_data( $post_id );
-	$start = asosyoloji_weekly_event_datetime( $event['start_date'], $event['start_time'], true );
-	$end   = asosyoloji_weekly_event_datetime(
-		$event['end_date'] ? $event['end_date'] : $event['start_date'],
-		$event['end_time'] ? $event['end_time'] : $event['start_time'],
-		true
-	);
+	$is_all_day = ! empty( $event['all_day'] );
+	if ( $is_all_day ) {
+		$start = str_replace( '-', '', $event['start_date'] );
+		$end   = gmdate( 'Ymd', strtotime( '+1 day', strtotime( $event['end_date'] ? $event['end_date'] : $event['start_date'] ) ) );
+	} else {
+		$start = asosyoloji_weekly_event_datetime( $event['start_date'], $event['start_time'], true );
+		$end   = asosyoloji_weekly_event_datetime(
+			$event['end_date'] ? $event['end_date'] : $event['start_date'],
+			$event['end_time'] ? $event['end_time'] : $event['start_time'],
+			true
+		);
+	}
 
 	$escape = static function ( $value ) {
 		return str_replace(
@@ -96,8 +107,8 @@ function asosyoloji_weekly_ics_endpoint() {
 		'BEGIN:VEVENT',
 		'UID:asosyoloji-event-' . $post_id . '@' . wp_parse_url( home_url( '/' ), PHP_URL_HOST ),
 		'DTSTAMP:' . gmdate( 'Ymd\THis\Z' ),
-		'DTSTART:' . $start,
-		'DTEND:' . $end,
+		( $is_all_day ? 'DTSTART;VALUE=DATE:' : 'DTSTART:' ) . $start,
+		( $is_all_day ? 'DTEND;VALUE=DATE:' : 'DTEND:' ) . $end,
 		'SUMMARY:' . $escape( $event['title'] ),
 		'DESCRIPTION:' . $escape( wp_strip_all_tags( $event['excerpt'] ) ),
 		'LOCATION:' . $escape( $location ),

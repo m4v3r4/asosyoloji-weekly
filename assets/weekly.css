@@ -201,10 +201,36 @@
 }
 
 .aso-calendar__more {
-  display: inline-block;
+  position: relative;
+  display: block;
   margin-top: 5px;
   color: var(--aso-weekly-muted);
   font-size: .68rem;
+}
+
+.aso-calendar__more summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.aso-calendar__more-list {
+  position: absolute;
+  z-index: 20;
+  width: min(260px, 75vw);
+  padding: 8px;
+  border: 1px solid var(--aso-weekly-border);
+  background: var(--aso-bg, #fff);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .14);
+}
+
+.aso-calendar__more-list a {
+  display: block;
+  padding: 6px;
+  color: var(--aso-weekly-text);
+}
+
+.aso-calendar__mobile-list {
+  display: none;
 }
 
 .aso-weekly-block-preview {
@@ -658,12 +684,20 @@ html[data-theme="dark"] .aso-weekly-event:hover {
 
 .aso-calendar__event.is-range-middle,
 .aso-calendar__event.is-range-end {
-  color: transparent;
+  color: var(--aso-weekly-text);
 }
 
-.aso-calendar__event.is-range-middle .screen-reader-text,
-.aso-calendar__event.is-range-end .screen-reader-text {
-  color: initial;
+.aso-calendar__event-title {
+  display: block;
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aso-calendar__event-title.is-continuation::before {
+  content: "↳ ";
+  color: var(--aso-weekly-accent);
 }
 
 @media (max-width: 760px) {
@@ -789,5 +823,53 @@ html[data-theme="dark"] .aso-weekly-event:hover {
   .aso-weekly-event__excerpt,
   .aso-weekly-event__more {
     display: none;
+  }
+
+  .aso-calendar {
+    overflow: visible;
+  }
+
+  .aso-calendar__weekdays,
+  .aso-calendar__grid {
+    display: none;
+  }
+
+  .aso-calendar__mobile-list {
+    display: grid;
+    margin-top: 12px;
+  }
+
+  .aso-calendar-mobile-event {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 14px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--aso-weekly-border);
+  }
+
+  .aso-calendar-mobile-event__date {
+    align-self: start;
+    padding: 9px 7px;
+    border-left: 4px solid var(--aso-weekly-accent);
+    background: var(--aso-weekly-surface);
+    font-size: .76rem;
+    font-weight: 900;
+    text-align: center;
+  }
+
+  .aso-calendar-mobile-event h3 {
+    margin: 0 0 7px;
+    font-size: 1.05rem;
+    line-height: 1.15;
+  }
+
+  .aso-calendar-mobile-event h3 a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .aso-calendar-mobile-event__meta {
+    color: var(--aso-weekly-muted);
+    font-size: .75rem;
   }
 }
