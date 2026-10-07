@@ -74,5 +74,37 @@ function asosyoloji_weekly_editor_assets( $hook ) {
 		ASOSYOLOJI_WEEKLY_VERSION,
 		true
 	);
+
+	$locations = get_posts(
+		array(
+			'post_type'      => 'location',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'orderby'        => 'title',
+			'order'          => 'ASC',
+		)
+	);
+
+	$options = array(
+		array(
+			'label' => __( 'Mekan seçin', 'asosyoloji-weekly' ),
+			'value' => '0',
+		),
+	);
+
+	foreach ( $locations as $location ) {
+		$options[] = array(
+			'label' => $location->post_title,
+			'value' => (string) $location->ID,
+		);
+	}
+
+	wp_localize_script(
+		'asosyoloji-weekly-editor',
+		'asosyolojiWeeklyEditor',
+		array(
+			'locations' => $options,
+		)
+	);
 }
 add_action( 'admin_enqueue_scripts', 'asosyoloji_weekly_editor_assets' );
