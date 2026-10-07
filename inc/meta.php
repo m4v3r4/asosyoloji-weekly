@@ -1,6 +1,6 @@
 <?php
 /**
- * Event and location metadata.
+ * Original Asosyoloji event metadata.
  *
  * @package AsosyolojiWeekly
  */
@@ -10,22 +10,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 function asosyoloji_weekly_register_event_meta() {
-	$event_meta = array(
-		'_event_start_date' => 'string',
-		'_event_start_time' => 'string',
-		'_event_end_date'   => 'string',
-		'_event_end_time'   => 'string',
-		'_location_id'      => 'integer',
-		'_event_organizer'  => 'string',
-		'_event_url'        => 'string',
-		'_event_price'      => 'string',
-		'_event_free'       => 'boolean',
+	$fields = array(
+		'em_id'              => 'integer',
+		'em_event_type'      => 'string',
+		'em_venue'           => 'string',
+		'em_organizer'       => 'string',
+		'em_performer'       => 'string',
+		'em_start_date'      => 'integer',
+		'em_start_time'      => 'string',
+		'em_end_date'        => 'integer',
+		'em_end_time'        => 'string',
+		'em_all_day'         => 'boolean',
+		'em_start_date_time' => 'integer',
+		'em_end_date_time'   => 'integer',
+		'em_fixed_event_price' => 'string',
 	);
 
-	foreach ( $event_meta as $meta_key => $type ) {
+	foreach ( $fields as $key => $type ) {
 		register_post_meta(
-			'event',
-			$meta_key,
+			'em_event',
+			$key,
 			array(
 				'type'              => $type,
 				'single'            => true,
@@ -37,110 +41,15 @@ function asosyoloji_weekly_register_event_meta() {
 			)
 		);
 	}
-
-	$location_meta = array(
-		'_location_address',
-		'_location_town',
-		'_location_state',
-		'_location_postcode',
-		'_location_region',
-		'_location_country',
-	);
-
-	foreach ( $location_meta as $meta_key ) {
-		register_post_meta(
-			'location',
-			$meta_key,
-			array(
-				'type'          => 'string',
-				'single'        => true,
-				'show_in_rest'  => true,
-				'auth_callback' => static function () {
-					return current_user_can( 'edit_posts' );
-				},
-				'sanitize_callback' => 'sanitize_text_field',
-			)
-		);
-	}
 }
 add_action( 'init', 'asosyoloji_weekly_register_event_meta', 20 );
-
-function asosyoloji_weekly_migrate_meta_keys() {
-	if ( get_option( 'asosyoloji_weekly_meta_model_migrated' ) ) {
-		return;
-	}
-
-	$events = get_posts(
-		array(
-			'post_type'      => 'event',
-			'post_status'    => 'any',
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-		)
-	);
-
-	$map = array(
-		'_aso_event_start_date' => '_event_start_date',
-		'_aso_event_start_time' => '_event_start_time',
-		'_aso_event_end_date'   => '_event_end_date',
-		'_aso_event_end_time'   => '_event_end_time',
-		'_aso_event_organizer'  => '_event_organizer',
-		'_aso_event_url'        => '_event_url',
-		'_aso_event_price'      => '_event_price',
-		'_aso_event_free'       => '_event_free',
-	);
-
-	foreach ( $events as $post_id ) {
-		foreach ( $map as $old_key => $new_key ) {
-			if ( '' === (string) get_post_meta( $post_id, $new_key, true ) ) {
-				$old_value = get_post_meta( $post_id, $old_key, true );
-				if ( '' !== (string) $old_value ) {
-					update_post_meta( $post_id, $new_key, $old_value );
-				}
-			}
-		}
-
-		$legacy_venue = get_post_meta( $post_id, '_aso_event_venue', true );
-		$legacy_city  = get_post_meta( $post_id, '_aso_event_city', true );
-
-		if ( ! get_post_meta( $post_id, '_location_id', true ) && ( $legacy_venue || $legacy_city ) ) {
-			$location_id = wp_insert_post(
-				array(
-					'post_type'   => 'location',
-					'post_status' => 'publish',
-					'post_title'  => $legacy_venue ? $legacy_venue : $legacy_city,
-				)
-			);
-
-			if ( ! is_wp_error( $location_id ) && $location_id ) {
-				update_post_meta( $location_id, '_location_town', $legacy_city );
-				update_post_meta( $post_id, '_location_id', $location_id );
-			}
-		}
-
-		$start_date = get_post_meta( $post_id, '_event_start_date', true );
-		$start_time = get_post_meta( $post_id, '_event_start_time', true );
-		$end_date   = get_post_meta( $post_id, '_event_end_date', true );
-		$end_time   = get_post_meta( $post_id, '_event_end_time', true );
-
-		if ( $start_date ) {
-			update_post_meta( $post_id, '_start_ts', strtotime( $start_date . ' ' . ( $start_time ? $start_time : '00:00' ) ) );
-		}
-		if ( $end_date ) {
-			update_post_meta( $post_id, '_end_ts', strtotime( $end_date . ' ' . ( $end_time ? $end_time : '23:59' ) ) );
-		}
-	}
-
-	update_option( 'asosyoloji_weekly_meta_model_migrated', ASOSYOLOJI_WEEKLY_VERSION );
-}
-add_action( 'admin_init', 'asosyoloji_weekly_migrate_meta_keys', 20 );
 
 function asosyoloji_weekly_meta_box() {
 	add_meta_box(
 		'asosyoloji-event-details',
 		__( 'Etkinlik Bilgileri', 'asosyoloji-weekly' ),
 		'asosyoloji_weekly_meta_box_render',
-		'event',
+		'em_event',
 		'normal',
 		'high'
 	);
@@ -150,50 +59,67 @@ add_action( 'add_meta_boxes', 'asosyoloji_weekly_meta_box' );
 function asosyoloji_weekly_meta_box_render( $post ) {
 	wp_nonce_field( 'asosyoloji_weekly_save_event', 'asosyoloji_weekly_nonce' );
 
-	$fields = array(
-		'start_date' => get_post_meta( $post->ID, '_event_start_date', true ),
-		'start_time' => get_post_meta( $post->ID, '_event_start_time', true ),
-		'end_date'   => get_post_meta( $post->ID, '_event_end_date', true ),
-		'end_time'   => get_post_meta( $post->ID, '_event_end_time', true ),
-		'location'   => absint( get_post_meta( $post->ID, '_location_id', true ) ),
-		'organizer'  => get_post_meta( $post->ID, '_event_organizer', true ),
-		'event_url'  => get_post_meta( $post->ID, '_event_url', true ),
-		'price'      => get_post_meta( $post->ID, '_event_price', true ),
-		'free'       => get_post_meta( $post->ID, '_event_free', true ),
-	);
-
-	$locations = get_posts(
-		array(
-			'post_type'      => 'location',
-			'post_status'    => 'publish',
-			'posts_per_page' => -1,
-			'orderby'        => 'title',
-			'order'          => 'ASC',
-		)
-	);
+	$event = asosyoloji_weekly_event_data( $post->ID );
 	?>
 	<div class="aso-weekly-admin-grid">
-		<p><label><strong><?php esc_html_e( 'Başlangıç tarihi', 'asosyoloji-weekly' ); ?></strong></label><br><input type="date" name="aso_event_start_date" value="<?php echo esc_attr( $fields['start_date'] ); ?>" required></p>
-		<p><label><strong><?php esc_html_e( 'Başlangıç saati', 'asosyoloji-weekly' ); ?></strong></label><br><input type="time" name="aso_event_start_time" value="<?php echo esc_attr( $fields['start_time'] ); ?>"></p>
-		<p><label><strong><?php esc_html_e( 'Bitiş tarihi', 'asosyoloji-weekly' ); ?></strong></label><br><input type="date" name="aso_event_end_date" value="<?php echo esc_attr( $fields['end_date'] ); ?>"></p>
-		<p><label><strong><?php esc_html_e( 'Bitiş saati', 'asosyoloji-weekly' ); ?></strong></label><br><input type="time" name="aso_event_end_time" value="<?php echo esc_attr( $fields['end_time'] ); ?>"></p>
 		<p>
-			<label><strong><?php esc_html_e( 'Mekan', 'asosyoloji-weekly' ); ?></strong></label><br>
-			<select class="widefat" name="aso_event_location_id">
-				<option value="0"><?php esc_html_e( 'Mekan seçin', 'asosyoloji-weekly' ); ?></option>
-				<?php foreach ( $locations as $location ) : ?>
-					<?php $location_value = absint( get_post_meta( $location->ID, '_location_id', true ) ) ?: $location->ID; ?>
-					<option value="<?php echo esc_attr( $location_value ); ?>" <?php selected( $fields['location'], $location_value ); ?>><?php echo esc_html( $location->post_title ); ?></option>
-				<?php endforeach; ?>
-			</select>
-			<small><a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=location' ) ); ?>"><?php esc_html_e( 'Yeni mekan ekle', 'asosyoloji-weekly' ); ?></a></small>
+			<label><strong><?php esc_html_e( 'Başlangıç tarihi', 'asosyoloji-weekly' ); ?></strong></label><br>
+			<input type="date" name="aso_event_start_date" value="<?php echo esc_attr( $event['start_date'] ); ?>" required>
 		</p>
-		<p><label><strong><?php esc_html_e( 'Organizatör', 'asosyoloji-weekly' ); ?></strong></label><br><input class="widefat" type="text" name="aso_event_organizer" value="<?php echo esc_attr( $fields['organizer'] ); ?>"></p>
-		<p><label><strong><?php esc_html_e( 'Etkinlik bağlantısı', 'asosyoloji-weekly' ); ?></strong></label><br><input class="widefat" type="url" name="aso_event_url" value="<?php echo esc_url( $fields['event_url'] ); ?>"></p>
-		<p><label><strong><?php esc_html_e( 'Fiyat / bilet bilgisi', 'asosyoloji-weekly' ); ?></strong></label><br><input class="widefat" type="text" name="aso_event_price" value="<?php echo esc_attr( $fields['price'] ); ?>"></p>
-		<p><label><input type="checkbox" name="aso_event_free" value="1" <?php checked( $fields['free'], '1' ); ?>> <?php esc_html_e( 'Ücretsiz etkinlik', 'asosyoloji-weekly' ); ?></label></p>
+		<p>
+			<label><strong><?php esc_html_e( 'Başlangıç saati', 'asosyoloji-weekly' ); ?></strong></label><br>
+			<input type="time" name="aso_event_start_time" value="<?php echo esc_attr( $event['start_time'] ); ?>">
+		</p>
+		<p>
+			<label><strong><?php esc_html_e( 'Bitiş tarihi', 'asosyoloji-weekly' ); ?></strong></label><br>
+			<input type="date" name="aso_event_end_date" value="<?php echo esc_attr( $event['end_date'] ); ?>">
+		</p>
+		<p>
+			<label><strong><?php esc_html_e( 'Bitiş saati', 'asosyoloji-weekly' ); ?></strong></label><br>
+			<input type="time" name="aso_event_end_time" value="<?php echo esc_attr( $event['end_time'] ); ?>">
+		</p>
+		<p>
+			<label><strong><?php esc_html_e( 'Tüm gün', 'asosyoloji-weekly' ); ?></strong></label><br>
+			<label><input type="checkbox" name="aso_event_all_day" value="1" <?php checked( ! empty( $event['all_day'] ) ); ?>> <?php esc_html_e( 'Saat göstermeden tüm gün etkinliği olarak işaretle', 'asosyoloji-weekly' ); ?></label>
+		</p>
+		<p>
+			<label><strong><?php esc_html_e( 'Fiyat / bilet bilgisi', 'asosyoloji-weekly' ); ?></strong></label><br>
+			<input class="widefat" type="text" name="aso_event_price" value="<?php echo esc_attr( $event['price'] ); ?>">
+		</p>
 	</div>
+	<p>
+		<?php esc_html_e( 'Etkinlik türü ve mekan için sağ taraftaki Etkinlik Türleri ve Mekanlar alanlarını kullanın.', 'asosyoloji-weekly' ); ?>
+	</p>
 	<?php
+}
+
+function asosyoloji_weekly_time_24h( $value ) {
+	if ( ! $value ) {
+		return '';
+	}
+	$timestamp = strtotime( $value );
+	return $timestamp ? gmdate( 'H:i', $timestamp ) : sanitize_text_field( $value );
+}
+
+function asosyoloji_weekly_timestamp_from_fields( $date, $time = '' ) {
+	if ( ! $date ) {
+		return 0;
+	}
+
+	$parts = array_map( 'intval', explode( '-', $date ) );
+	if ( 3 !== count( $parts ) ) {
+		return 0;
+	}
+
+	$hour = 0;
+	$minute = 0;
+	if ( $time ) {
+		$time_parts = explode( ':', $time );
+		$hour       = isset( $time_parts[0] ) ? (int) $time_parts[0] : 0;
+		$minute     = isset( $time_parts[1] ) ? (int) $time_parts[1] : 0;
+	}
+
+	return gmmktime( $hour, $minute, 0, $parts[1], $parts[2], $parts[0] );
 }
 
 function asosyoloji_weekly_save_meta( $post_id ) {
@@ -206,127 +132,27 @@ function asosyoloji_weekly_save_meta( $post_id ) {
 		return;
 	}
 
-	$text_fields = array(
-		'aso_event_start_date' => '_event_start_date',
-		'aso_event_start_time' => '_event_start_time',
-		'aso_event_end_date'   => '_event_end_date',
-		'aso_event_end_time'   => '_event_end_time',
-		'aso_event_organizer'  => '_event_organizer',
-		'aso_event_price'      => '_event_price',
-	);
+	$start_date = isset( $_POST['aso_event_start_date'] ) ? sanitize_text_field( wp_unslash( $_POST['aso_event_start_date'] ) ) : '';
+	$start_time = isset( $_POST['aso_event_start_time'] ) ? sanitize_text_field( wp_unslash( $_POST['aso_event_start_time'] ) ) : '';
+	$end_date   = isset( $_POST['aso_event_end_date'] ) ? sanitize_text_field( wp_unslash( $_POST['aso_event_end_date'] ) ) : $start_date;
+	$end_time   = isset( $_POST['aso_event_end_time'] ) ? sanitize_text_field( wp_unslash( $_POST['aso_event_end_time'] ) ) : $start_time;
+	$all_day    = isset( $_POST['aso_event_all_day'] ) ? 1 : 0;
+	$price      = isset( $_POST['aso_event_price'] ) ? sanitize_text_field( wp_unslash( $_POST['aso_event_price'] ) ) : '';
 
-	foreach ( $text_fields as $input => $meta_key ) {
-		$value = isset( $_POST[ $input ] ) ? sanitize_text_field( wp_unslash( $_POST[ $input ] ) ) : '';
-		if ( '' === $value ) {
-			delete_post_meta( $post_id, $meta_key );
-		} else {
-			update_post_meta( $post_id, $meta_key, $value );
-		}
+	if ( ! $end_date ) {
+		$end_date = $start_date;
 	}
 
-	update_post_meta( $post_id, '_location_id', isset( $_POST['aso_event_location_id'] ) ? absint( $_POST['aso_event_location_id'] ) : 0 );
+	$start_ts = asosyoloji_weekly_timestamp_from_fields( $start_date, $start_time );
+	$end_ts   = asosyoloji_weekly_timestamp_from_fields( $end_date, $end_time );
 
-	$url = isset( $_POST['aso_event_url'] ) ? esc_url_raw( wp_unslash( $_POST['aso_event_url'] ) ) : '';
-	if ( $url ) {
-		update_post_meta( $post_id, '_event_url', $url );
-	} else {
-		delete_post_meta( $post_id, '_event_url' );
-	}
-
-	update_post_meta( $post_id, '_event_free', isset( $_POST['aso_event_free'] ) ? '1' : '0' );
-
-	$start_date = get_post_meta( $post_id, '_event_start_date', true );
-	$start_time = get_post_meta( $post_id, '_event_start_time', true );
-	$end_date   = get_post_meta( $post_id, '_event_end_date', true );
-	$end_time   = get_post_meta( $post_id, '_event_end_time', true );
-
-	if ( $start_date ) {
-		update_post_meta( $post_id, '_start_ts', strtotime( $start_date . ' ' . ( $start_time ? $start_time : '00:00' ) ) );
-	}
-	if ( $end_date ) {
-		update_post_meta( $post_id, '_end_ts', strtotime( $end_date . ' ' . ( $end_time ? $end_time : '23:59' ) ) );
-	}
+	update_post_meta( $post_id, 'em_start_date_time', $start_ts );
+	update_post_meta( $post_id, 'em_end_date_time', $end_ts );
+	update_post_meta( $post_id, 'em_start_date', asosyoloji_weekly_timestamp_from_fields( $start_date ) );
+	update_post_meta( $post_id, 'em_end_date', asosyoloji_weekly_timestamp_from_fields( $end_date ) );
+	update_post_meta( $post_id, 'em_start_time', $start_time ? wp_date( 'h:i A', strtotime( $start_time ) ) : '' );
+	update_post_meta( $post_id, 'em_end_time', $end_time ? wp_date( 'h:i A', strtotime( $end_time ) ) : '' );
+	update_post_meta( $post_id, 'em_all_day', $all_day );
+	update_post_meta( $post_id, 'em_fixed_event_price', $price );
 }
-add_action( 'save_post_event', 'asosyoloji_weekly_save_meta' );
-
-
-function asosyoloji_weekly_location_meta_box() {
-	add_meta_box(
-		'asosyoloji-location-details',
-		__( 'Mekan Bilgileri', 'asosyoloji-weekly' ),
-		'asosyoloji_weekly_location_meta_box_render',
-		'location',
-		'normal',
-		'high'
-	);
-}
-add_action( 'add_meta_boxes', 'asosyoloji_weekly_location_meta_box' );
-
-function asosyoloji_weekly_location_meta_box_render( $post ) {
-	wp_nonce_field( 'asosyoloji_weekly_save_location', 'asosyoloji_weekly_location_nonce' );
-
-	$fields = array(
-		'address'  => get_post_meta( $post->ID, '_location_address', true ),
-		'town'     => get_post_meta( $post->ID, '_location_town', true ),
-		'state'    => get_post_meta( $post->ID, '_location_state', true ),
-		'postcode' => get_post_meta( $post->ID, '_location_postcode', true ),
-		'region'   => get_post_meta( $post->ID, '_location_region', true ),
-		'country'  => get_post_meta( $post->ID, '_location_country', true ),
-	);
-	?>
-	<p>
-		<label for="aso-location-address"><strong><?php esc_html_e( 'Adres', 'asosyoloji-weekly' ); ?></strong></label>
-		<input class="widefat" id="aso-location-address" name="aso_location_address" type="text" value="<?php echo esc_attr( $fields['address'] ); ?>">
-	</p>
-	<p>
-		<label for="aso-location-town"><strong><?php esc_html_e( 'Şehir / İlçe', 'asosyoloji-weekly' ); ?></strong></label>
-		<input class="widefat" id="aso-location-town" name="aso_location_town" type="text" value="<?php echo esc_attr( $fields['town'] ); ?>">
-	</p>
-	<p>
-		<label for="aso-location-state"><strong><?php esc_html_e( 'İl / Bölge', 'asosyoloji-weekly' ); ?></strong></label>
-		<input class="widefat" id="aso-location-state" name="aso_location_state" type="text" value="<?php echo esc_attr( $fields['state'] ); ?>">
-	</p>
-	<p>
-		<label for="aso-location-postcode"><strong><?php esc_html_e( 'Posta kodu', 'asosyoloji-weekly' ); ?></strong></label>
-		<input class="widefat" id="aso-location-postcode" name="aso_location_postcode" type="text" value="<?php echo esc_attr( $fields['postcode'] ); ?>">
-	</p>
-	<p>
-		<label for="aso-location-region"><strong><?php esc_html_e( 'Bölge', 'asosyoloji-weekly' ); ?></strong></label>
-		<input class="widefat" id="aso-location-region" name="aso_location_region" type="text" value="<?php echo esc_attr( $fields['region'] ); ?>">
-	</p>
-	<p>
-		<label for="aso-location-country"><strong><?php esc_html_e( 'Ülke', 'asosyoloji-weekly' ); ?></strong></label>
-		<input class="widefat" id="aso-location-country" name="aso_location_country" type="text" value="<?php echo esc_attr( $fields['country'] ); ?>" placeholder="TR">
-	</p>
-	<?php
-}
-
-function asosyoloji_weekly_save_location_meta( $post_id ) {
-	if (
-		! isset( $_POST['asosyoloji_weekly_location_nonce'] ) ||
-		! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['asosyoloji_weekly_location_nonce'] ) ), 'asosyoloji_weekly_save_location' ) ||
-		! current_user_can( 'edit_post', $post_id ) ||
-		wp_is_post_revision( $post_id )
-	) {
-		return;
-	}
-
-	$fields = array(
-		'aso_location_address'  => '_location_address',
-		'aso_location_town'     => '_location_town',
-		'aso_location_state'    => '_location_state',
-		'aso_location_postcode' => '_location_postcode',
-		'aso_location_region'   => '_location_region',
-		'aso_location_country'  => '_location_country',
-	);
-
-	foreach ( $fields as $input => $meta_key ) {
-		$value = isset( $_POST[ $input ] ) ? sanitize_text_field( wp_unslash( $_POST[ $input ] ) ) : '';
-		if ( '' === $value ) {
-			delete_post_meta( $post_id, $meta_key );
-		} else {
-			update_post_meta( $post_id, $meta_key, $value );
-		}
-	}
-}
-add_action( 'save_post_location', 'asosyoloji_weekly_save_location_meta' );
+add_action( 'save_post_em_event', 'asosyoloji_weekly_save_meta' );
