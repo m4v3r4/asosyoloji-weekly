@@ -38,6 +38,22 @@ function asosyoloji_weekly_ics_url( $post_id ) {
 	);
 }
 
+function asosyoloji_weekly_recurrence_rule( $event ) {
+	$frequencies = array(
+		'daily'   => 'DAILY',
+		'weekly'  => 'WEEKLY',
+		'monthly' => 'MONTHLY',
+	);
+	if ( empty( $frequencies[ $event['recurrence'] ] ) || empty( $event['recurrence_until'] ) ) {
+		return '';
+	}
+
+	$rule = 'RRULE:FREQ=' . $frequencies[ $event['recurrence'] ];
+	$rule .= ';INTERVAL=' . max( 1, absint( $event['recurrence_interval'] ) );
+	$rule .= ';UNTIL=' . str_replace( '-', '', $event['recurrence_until'] ) . 'T235959Z';
+	return $rule;
+}
+
 function asosyoloji_weekly_google_calendar_url( $post_id ) {
 	$event = asosyoloji_weekly_event_data( $post_id );
 
@@ -54,6 +70,7 @@ function asosyoloji_weekly_google_calendar_url( $post_id ) {
 	}
 
 	$location = trim( implode( ', ', array_filter( array( $event['venue'], $event['city'] ) ) ) );
+	$recurrence = asosyoloji_weekly_recurrence_rule( $event );
 
 	return add_query_arg(
 		array(
@@ -62,6 +79,7 @@ function asosyoloji_weekly_google_calendar_url( $post_id ) {
 			'dates'    => $start . '/' . $end,
 			'details'  => $event['url'],
 			'location' => $location,
+			'recur'    => $recurrence,
 		),
 		'https://calendar.google.com/calendar/render'
 	);
@@ -116,6 +134,10 @@ function asosyoloji_weekly_ics_endpoint() {
 		'END:VEVENT',
 		'END:VCALENDAR',
 	);
+	$recurrence = asosyoloji_weekly_recurrence_rule( $event );
+	if ( $recurrence ) {
+		array_splice( $lines, 9, 0, $recurrence );
+	}
 
 	status_header( 200 );
 	nocache_headers();

@@ -21,9 +21,9 @@ function asosyoloji_weekly_event_details_markup( $post_id ) {
 		$date_label .= ' – ' . wp_date( 'd F Y', strtotime( $event['end_date'] ) );
 	}
 
-	$time_label = $event['start_time'];
+	$time_label = asosyoloji_weekly_time_label( $event );
 	if ( $event['end_time'] ) {
-		$time_label .= ( $time_label ? ' – ' : '' ) . $event['end_time'];
+		$time_label = $event['start_time'] ? $event['start_time'] . ' – ' . $event['end_time'] : $time_label;
 	}
 
 	ob_start();
@@ -35,10 +35,15 @@ function asosyoloji_weekly_event_details_markup( $post_id ) {
 				<strong><?php echo esc_html( $date_label ); ?></strong>
 			</div>
 
-			<?php if ( $time_label ) : ?>
+			<div>
+				<span class="aso-event-details__label"><?php esc_html_e( 'Saat', 'asosyoloji-weekly' ); ?></span>
+				<strong><?php echo esc_html( $time_label ); ?></strong>
+			</div>
+
+			<?php if ( ! empty( $event['recurrence'] ) && 'none' !== $event['recurrence'] ) : ?>
 				<div>
-					<span class="aso-event-details__label"><?php esc_html_e( 'Saat', 'asosyoloji-weekly' ); ?></span>
-					<strong><?php echo esc_html( $time_label ); ?></strong>
+					<span class="aso-event-details__label"><?php esc_html_e( 'Tekrar', 'asosyoloji-weekly' ); ?></span>
+					<strong><?php echo esc_html( asosyoloji_weekly_recurrence_label( $event ) ); ?></strong>
 				</div>
 			<?php endif; ?>
 

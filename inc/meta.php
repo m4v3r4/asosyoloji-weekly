@@ -27,6 +27,9 @@ function asosyoloji_weekly_register_event_meta() {
 		'em_start_date_time' => 'integer',
 		'em_end_date_time'   => 'integer',
 		'em_fixed_event_price' => 'string',
+		'em_recurrence'       => 'string',
+		'em_recurrence_interval' => 'integer',
+		'em_recurrence_until' => 'string',
 	);
 
 	foreach ( $fields as $key => $type ) {
@@ -63,6 +66,7 @@ function asosyoloji_weekly_meta_box_render( $post ) {
 	wp_nonce_field( 'asosyoloji_weekly_save_event', 'asosyoloji_weekly_nonce' );
 
 	$event = asosyoloji_weekly_event_data( $post->ID );
+	$recurrence = isset( $event['recurrence'] ) ? $event['recurrence'] : 'none';
 	?>
 	<div class="aso-weekly-admin-grid">
 		<p>
@@ -104,6 +108,25 @@ function asosyoloji_weekly_meta_box_render( $post ) {
 		<p>
 			<label><strong><?php esc_html_e( 'Ücretsiz', 'asosyoloji-weekly' ); ?></strong></label><br>
 			<label><input type="checkbox" name="aso_event_free" value="1" <?php checked( ! empty( $event['free'] ) ); ?>> <?php esc_html_e( 'Etkinlik ücretsizdir', 'asosyoloji-weekly' ); ?></label>
+		</p>
+		<p>
+			<label for="aso-event-recurrence"><strong><?php esc_html_e( 'Tekrar', 'asosyoloji-weekly' ); ?></strong></label><br>
+			<select id="aso-event-recurrence" name="aso_event_recurrence" class="widefat">
+				<option value="none" <?php selected( $recurrence, 'none' ); ?>><?php esc_html_e( 'Tekrarlanmaz', 'asosyoloji-weekly' ); ?></option>
+				<option value="daily" <?php selected( $recurrence, 'daily' ); ?>><?php esc_html_e( 'Günlük', 'asosyoloji-weekly' ); ?></option>
+				<option value="weekly" <?php selected( $recurrence, 'weekly' ); ?>><?php esc_html_e( 'Haftalık', 'asosyoloji-weekly' ); ?></option>
+				<option value="monthly" <?php selected( $recurrence, 'monthly' ); ?>><?php esc_html_e( 'Aylık', 'asosyoloji-weekly' ); ?></option>
+			</select>
+		</p>
+		<p>
+			<label for="aso-event-recurrence-interval"><strong><?php esc_html_e( 'Tekrar aralığı', 'asosyoloji-weekly' ); ?></strong></label><br>
+			<input id="aso-event-recurrence-interval" type="number" name="aso_event_recurrence_interval" min="1" max="52" value="<?php echo esc_attr( $event['recurrence_interval'] ?? 1 ); ?>">
+			<span class="description"><?php esc_html_e( 'Örn. 2 ve Haftalık: iki haftada bir.', 'asosyoloji-weekly' ); ?></span>
+		</p>
+		<p>
+			<label for="aso-event-recurrence-until"><strong><?php esc_html_e( 'Tekrar bitiş tarihi', 'asosyoloji-weekly' ); ?></strong></label><br>
+			<input id="aso-event-recurrence-until" type="date" name="aso_event_recurrence_until" value="<?php echo esc_attr( $event['recurrence_until'] ?? '' ); ?>">
+			<span class="description"><?php esc_html_e( 'Tekrar seçildiğinde zorunludur.', 'asosyoloji-weekly' ); ?></span>
 		</p>
 	</div>
 	<p>
@@ -161,6 +184,20 @@ function asosyoloji_weekly_save_meta( $post_id ) {
 	$organizer  = isset( $_POST['aso_event_organizer'] ) ? sanitize_text_field( wp_unslash( $_POST['aso_event_organizer'] ) ) : '';
 	$event_url  = isset( $_POST['aso_event_url'] ) ? esc_url_raw( wp_unslash( $_POST['aso_event_url'] ) ) : '';
 	$free       = isset( $_POST['aso_event_free'] ) ? 1 : 0;
+	$recurrence = isset( $_POST['aso_event_recurrence'] ) ? sanitize_key( wp_unslash( $_POST['aso_event_recurrence'] ) ) : 'none';
+	$recurrence = in_array( $recurrence, array( 'none', 'daily', 'weekly', 'monthly' ), true ) ? $recurrence : 'none';
+	$recurrence_interval = isset( $_POST['aso_event_recurrence_interval'] ) ? min( 52, max( 1, absint( $_POST['aso_event_recurrence_interval'] ) ) ) : 1;
+	$recurrence_until = isset( $_POST['aso_event_recurrence_until'] ) ? sanitize_text_field( wp_unslash( $_POST['aso_event_recurrence_until'] ) ) : '';
+	if (
+		'none' !== $recurrence &&
+		(
+			! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $recurrence_until ) ||
+			strtotime( $recurrence_until ) < strtotime( $start_date )
+		)
+	) {
+		$recurrence = 'none';
+		$recurrence_until = '';
+	}
 
 	if ( ! $end_date ) {
 		$end_date = $start_date;
@@ -186,5 +223,8 @@ function asosyoloji_weekly_save_meta( $post_id ) {
 	update_post_meta( $post_id, 'em_organizer', $organizer );
 	update_post_meta( $post_id, 'em_event_url', $event_url );
 	update_post_meta( $post_id, 'em_free', $free );
+	update_post_meta( $post_id, 'em_recurrence', $recurrence );
+	update_post_meta( $post_id, 'em_recurrence_interval', $recurrence_interval );
+	update_post_meta( $post_id, 'em_recurrence_until', $recurrence_until );
 }
 add_action( 'save_post_em_event', 'asosyoloji_weekly_save_meta' );

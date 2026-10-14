@@ -47,6 +47,30 @@ function asosyoloji_weekly_format_range( $start_date, $end_date ) {
 	);
 }
 
+function asosyoloji_weekly_time_label( $event ) {
+	if ( ! empty( $event['all_day'] ) ) {
+		return __( 'Tüm gün', 'asosyoloji-weekly' );
+	}
+
+	return ! empty( $event['start_time'] ) ? $event['start_time'] : __( 'Saat belirtilmedi', 'asosyoloji-weekly' );
+}
+
+function asosyoloji_weekly_recurrence_label( $event ) {
+	$interval = max( 1, absint( $event['recurrence_interval'] ?? 1 ) );
+	$frequency = $event['recurrence'] ?? 'none';
+	$labels = array(
+		'daily' => 1 === $interval ? __( 'Her gün', 'asosyoloji-weekly' ) : sprintf( __( 'Her %d günde bir', 'asosyoloji-weekly' ), $interval ),
+		'weekly' => 1 === $interval ? __( 'Her hafta', 'asosyoloji-weekly' ) : sprintf( __( 'Her %d haftada bir', 'asosyoloji-weekly' ), $interval ),
+		'monthly' => 1 === $interval ? __( 'Her ay', 'asosyoloji-weekly' ) : sprintf( __( 'Her %d ayda bir', 'asosyoloji-weekly' ), $interval ),
+	);
+	if ( empty( $labels[ $frequency ] ) ) {
+		return '';
+	}
+
+	$until = ! empty( $event['recurrence_until'] ) ? wp_date( 'd F Y', strtotime( $event['recurrence_until'] ) ) : '';
+	return $until ? sprintf( __( '%1$s · %2$s tarihine kadar', 'asosyoloji-weekly' ), $labels[ $frequency ], $until ) : $labels[ $frequency ];
+}
+
 function asosyoloji_weekly_render_list( $args = array() ) {
 	$defaults = array(
 		'title'      => __( 'Haftalık', 'asosyoloji-weekly' ),
@@ -55,11 +79,29 @@ function asosyoloji_weekly_render_list( $args = array() ) {
 		'event_type' => 0,
 		'city'       => '',
 		'compact'    => false,
+		'venue'      => 0,
+		'start'      => '',
+		'end'        => '',
+		'order'      => 'ASC',
+		'kicker'     => __( 'Etkinlik Takvimi', 'asosyoloji-weekly' ),
+		'empty_text' => __( 'Bu dönem için etkinlik bulunmuyor.', 'asosyoloji-weekly' ),
 	);
 
 	$args = wp_parse_args( $args, $defaults );
 
-	if ( 'week' === $args['mode'] ) {
+	if ( $args['start'] ) {
+		$events = asosyoloji_weekly_collect_events(
+			array(
+				'start'      => $args['start'],
+				'end'        => $args['end'],
+				'count'      => $args['count'],
+				'event_type' => $args['event_type'],
+				'venue'      => $args['venue'],
+				'city'       => $args['city'],
+				'order'      => $args['order'],
+			)
+		);
+	} elseif ( 'week' === $args['mode'] ) {
 		$range  = asosyoloji_weekly_week_range();
 		$events = asosyoloji_weekly_collect_events(
 			array(
@@ -67,6 +109,7 @@ function asosyoloji_weekly_render_list( $args = array() ) {
 				'end'        => $range['end'],
 				'count'      => $args['count'],
 				'event_type' => $args['event_type'],
+				'venue'      => $args['venue'],
 				'city'       => $args['city'],
 			)
 		);
@@ -76,6 +119,7 @@ function asosyoloji_weekly_render_list( $args = array() ) {
 				'start'      => asosyoloji_weekly_today(),
 				'count'      => $args['count'],
 				'event_type' => $args['event_type'],
+				'venue'      => $args['venue'],
 				'city'       => $args['city'],
 			)
 		);
@@ -86,7 +130,7 @@ function asosyoloji_weekly_render_list( $args = array() ) {
 	<section class="aso-weekly<?php echo $args['compact'] ? ' aso-weekly--compact' : ''; ?>">
 		<div class="aso-weekly__header">
 			<div>
-				<div class="aso-weekly__kicker"><?php esc_html_e( 'Etkinlik Takvimi', 'asosyoloji-weekly' ); ?></div>
+				<div class="aso-weekly__kicker"><?php echo esc_html( $args['kicker'] ); ?></div>
 				<h2 class="aso-weekly__title"><?php echo esc_html( $args['title'] ); ?></h2>
 			</div>
 			<?php if ( 'week' === $args['mode'] ) : ?>
@@ -123,9 +167,7 @@ function asosyoloji_weekly_render_list( $args = array() ) {
 							</h3>
 
 							<div class="aso-weekly-event__meta">
-								<?php if ( $event['start_time'] ) : ?>
-									<span><?php echo esc_html( $event['start_time'] ); ?></span>
-								<?php endif; ?>
+								<span><?php echo esc_html( asosyoloji_weekly_time_label( $event ) ); ?></span>
 								<?php if ( $event['venue'] ) : ?>
 									<span><?php echo esc_html( $event['venue'] ); ?></span>
 								<?php endif; ?>
@@ -145,7 +187,7 @@ function asosyoloji_weekly_render_list( $args = array() ) {
 					</article>
 				<?php endforeach; ?>
 			<?php else : ?>
-				<p class="aso-weekly__empty"><?php esc_html_e( 'Bu dönem için etkinlik bulunmuyor.', 'asosyoloji-weekly' ); ?></p>
+				<p class="aso-weekly__empty"><?php echo esc_html( $args['empty_text'] ); ?></p>
 			<?php endif; ?>
 		</div>
 	</section>
@@ -158,6 +200,8 @@ function asosyoloji_weekly_render_calendar( $args = array() ) {
 		'title' => __( 'Etkinlik Takvimi', 'asosyoloji-weekly' ),
 		'year'  => (int) current_time( 'Y' ),
 		'month' => (int) current_time( 'm' ),
+		'event_type' => 0,
+		'venue' => 0,
 	);
 
 	$args  = wp_parse_args( $args, $defaults );
@@ -178,6 +222,8 @@ function asosyoloji_weekly_render_calendar( $args = array() ) {
 			'start' => $first_day,
 			'end'   => $last_day,
 			'count' => -1,
+			'event_type' => absint( $args['event_type'] ),
+			'venue' => absint( $args['venue'] ),
 		)
 	);
 
@@ -294,7 +340,7 @@ function asosyoloji_weekly_render_calendar( $args = array() ) {
 						<div>
 							<h3><a href="<?php echo esc_url( $event['url'] ); ?>"><?php echo esc_html( $event['title'] ); ?></a></h3>
 							<div class="aso-calendar-mobile-event__meta">
-								<?php echo $event['start_time'] ? esc_html( $event['start_time'] ) : esc_html__( 'Tüm gün', 'asosyoloji-weekly' ); ?>
+								<?php echo esc_html( asosyoloji_weekly_time_label( $event ) ); ?>
 								<?php if ( $event['venue'] || $event['city'] ) : ?>
 									<span aria-hidden="true"> · </span><?php echo esc_html( implode( ', ', array_filter( array( $event['venue'], $event['city'] ) ) ) ); ?>
 								<?php endif; ?>
@@ -349,6 +395,101 @@ function asosyoloji_weekly_shortcode( $atts ) {
 }
 add_shortcode( 'asosyoloji_haftalik', 'asosyoloji_weekly_shortcode' );
 
+/**
+ * Render the public calendar browser with date-state and taxonomy filters.
+ *
+ * @param array $args Browser settings.
+ * @return string
+ */
+function asosyoloji_weekly_render_browser( $args = array() ) {
+	$defaults = array(
+		'title' => __( 'Etkinlik Takvimi', 'asosyoloji-weekly' ),
+		'year'  => (int) current_time( 'Y' ),
+		'month' => (int) current_time( 'm' ),
+	);
+	$args = wp_parse_args( $args, $defaults );
+
+	$scope = isset( $_GET['aso_event_scope'] ) ? sanitize_key( wp_unslash( $_GET['aso_event_scope'] ) ) : 'calendar';
+	$scope = in_array( $scope, array( 'calendar', 'today', 'upcoming', 'past' ), true ) ? $scope : 'calendar';
+	$event_type = isset( $_GET['aso_event_type'] ) ? absint( $_GET['aso_event_type'] ) : 0;
+	$venue = isset( $_GET['aso_event_venue'] ) ? absint( $_GET['aso_event_venue'] ) : 0;
+	$types = get_terms( array( 'taxonomy' => 'em_event_type', 'hide_empty' => true ) );
+	$venues = get_terms( array( 'taxonomy' => 'em_venue', 'hide_empty' => true ) );
+	$types = is_wp_error( $types ) ? array() : $types;
+	$venues = is_wp_error( $venues ) ? array() : $venues;
+	$base_url = remove_query_arg( array( 'aso_event_scope', 'aso_event_type', 'aso_event_venue', 'aso_calendar_month' ) );
+	$today = asosyoloji_weekly_today();
+
+	$tabs = array(
+		'calendar' => __( 'Takvim', 'asosyoloji-weekly' ),
+		'today' => __( 'Bugün', 'asosyoloji-weekly' ),
+		'upcoming' => __( 'Yaklaşan', 'asosyoloji-weekly' ),
+		'past' => __( 'Geçmiş', 'asosyoloji-weekly' ),
+	);
+
+	ob_start();
+	?>
+	<section class="aso-event-browser" data-aso-event-browser>
+		<nav class="aso-event-browser__tabs" aria-label="<?php esc_attr_e( 'Etkinlik dönemi', 'asosyoloji-weekly' ); ?>">
+			<?php foreach ( $tabs as $tab_scope => $tab_label ) : ?>
+				<?php
+				$tab_url = add_query_arg(
+					array_filter(
+						array(
+							'aso_event_scope' => $tab_scope,
+							'aso_event_type'  => $event_type ?: null,
+							'aso_event_venue' => $venue ?: null,
+						)
+					),
+					$base_url
+				);
+				?>
+				<a href="<?php echo esc_url( $tab_url ); ?>"<?php echo $scope === $tab_scope ? ' class="is-active" aria-current="page"' : ''; ?>><?php echo esc_html( $tab_label ); ?></a>
+			<?php endforeach; ?>
+		</nav>
+
+		<form class="aso-event-browser__filters" method="get" action="<?php echo esc_url( $base_url ); ?>">
+			<input type="hidden" name="aso_event_scope" value="<?php echo esc_attr( $scope ); ?>">
+			<label>
+				<span><?php esc_html_e( 'Etkinlik türü', 'asosyoloji-weekly' ); ?></span>
+				<select name="aso_event_type">
+					<option value="0"><?php esc_html_e( 'Tüm türler', 'asosyoloji-weekly' ); ?></option>
+					<?php foreach ( $types as $term ) : ?>
+						<option value="<?php echo esc_attr( $term->term_id ); ?>" <?php selected( $event_type, $term->term_id ); ?>><?php echo esc_html( $term->name ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</label>
+			<label>
+				<span><?php esc_html_e( 'Mekân', 'asosyoloji-weekly' ); ?></span>
+				<select name="aso_event_venue">
+					<option value="0"><?php esc_html_e( 'Tüm mekânlar', 'asosyoloji-weekly' ); ?></option>
+					<?php foreach ( $venues as $term ) : ?>
+						<option value="<?php echo esc_attr( $term->term_id ); ?>" <?php selected( $venue, $term->term_id ); ?>><?php echo esc_html( $term->name ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</label>
+			<button type="submit"><?php esc_html_e( 'Filtrele', 'asosyoloji-weekly' ); ?></button>
+			<?php if ( $event_type || $venue ) : ?>
+				<a class="aso-event-browser__clear" href="<?php echo esc_url( add_query_arg( 'aso_event_scope', $scope, $base_url ) ); ?>"><?php esc_html_e( 'Temizle', 'asosyoloji-weekly' ); ?></a>
+			<?php endif; ?>
+		</form>
+
+		<div class="aso-event-browser__results">
+			<?php if ( 'calendar' === $scope ) : ?>
+				<?php echo wp_kses_post( asosyoloji_weekly_render_calendar( array( 'title' => $args['title'], 'year' => $args['year'], 'month' => $args['month'], 'event_type' => $event_type, 'venue' => $venue ) ) ); ?>
+			<?php elseif ( 'today' === $scope ) : ?>
+				<?php echo wp_kses_post( asosyoloji_weekly_render_list( array( 'title' => __( 'Bugünün etkinlikleri', 'asosyoloji-weekly' ), 'mode' => 'range', 'start' => $today, 'end' => $today, 'count' => -1, 'event_type' => $event_type, 'venue' => $venue, 'kicker' => __( 'Bugün', 'asosyoloji-weekly' ), 'empty_text' => __( 'Bugün için etkinlik bulunmuyor.', 'asosyoloji-weekly' ) ) ) ); ?>
+			<?php elseif ( 'upcoming' === $scope ) : ?>
+				<?php echo wp_kses_post( asosyoloji_weekly_render_list( array( 'title' => __( 'Yaklaşan etkinlikler', 'asosyoloji-weekly' ), 'mode' => 'range', 'start' => $today, 'end' => wp_date( 'Y-m-d', strtotime( '+2 years', strtotime( $today ) ) ), 'count' => 40, 'event_type' => $event_type, 'venue' => $venue, 'kicker' => __( 'Yaklaşan', 'asosyoloji-weekly' ), 'empty_text' => __( 'Yaklaşan etkinlik bulunmuyor.', 'asosyoloji-weekly' ) ) ) ); ?>
+			<?php else : ?>
+				<?php echo wp_kses_post( asosyoloji_weekly_render_list( array( 'title' => __( 'Geçmiş etkinlikler', 'asosyoloji-weekly' ), 'mode' => 'range', 'start' => '2000-01-01', 'end' => wp_date( 'Y-m-d', strtotime( '-1 day', strtotime( $today ) ) ), 'count' => 40, 'event_type' => $event_type, 'venue' => $venue, 'order' => 'DESC', 'kicker' => __( 'Arşiv', 'asosyoloji-weekly' ), 'empty_text' => __( 'Geçmiş etkinlik bulunmuyor.', 'asosyoloji-weekly' ) ) ) ); ?>
+			<?php endif; ?>
+		</div>
+	</section>
+	<?php
+	return (string) ob_get_clean();
+}
+
 function asosyoloji_calendar_shortcode( $atts ) {
 	$atts = shortcode_atts(
 		array(
@@ -360,7 +501,7 @@ function asosyoloji_calendar_shortcode( $atts ) {
 		'asosyoloji_takvim'
 	);
 
-	return asosyoloji_weekly_render_calendar(
+	return asosyoloji_weekly_render_browser(
 		array(
 			'title' => sanitize_text_field( $atts['title'] ),
 			'year'  => absint( $atts['year'] ),

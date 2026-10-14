@@ -11,6 +11,8 @@ Etkinlik verisini temadan bağımsız tutar. Tema değişse bile etkinlikler Wor
 - `Etkinlik` özel içerik türü
 - Etkinlik türü taksonomisi
 - Başlangıç / bitiş tarihi ve saati
+- Saatsiz etkinliklerde “Saat belirtilmedi”, tüm gün etkinliklerinde “Tüm gün” etiketi
+- Günlük, haftalık veya aylık tekrarlanan etkinlikler
 - Mekan
 - Şehir
 - Organizatör
@@ -20,6 +22,8 @@ Etkinlik verisini temadan bağımsız tutar. Tema değişse bile etkinlikler Wor
 - Haftalık etkinlik listesi
 - Yaklaşan etkinlikler listesi
 - Aylık takvim
+- Takvim, Bugün, Yaklaşan ve Geçmiş görünümleri
+- Etkinlik türü ve mekân filtreleri
 - Klasik WordPress widget
 - Gutenberg blokları
 - Shortcode desteği
@@ -62,6 +66,12 @@ Aylık takvim:
 ```text
 [asosyoloji_takvim]
 ```
+
+Bu kısa kod ziyaretçiye **Takvim / Bugün / Yaklaşan / Geçmiş** sekmelerini ve etkinlik türü/mekân filtrelerini birlikte sunar.
+
+## Tekrarlanan etkinlikler
+
+Etkinlik düzenleme ekranında **Tekrar**, **Tekrar aralığı** ve **Tekrar bitiş tarihi** alanları bulunur. Örneğin her hafta yinelenen bir etkinlik için ayrı kayıtlar açmak yerine tek kayıtta “Haftalık”, aralık “1” ve son tarih seçilir. Tekrar bilgisi liste/takvim sonuçlarına, ICS dosyasına ve Google Calendar bağlantısına yansır.
 
 Belirli ay:
 

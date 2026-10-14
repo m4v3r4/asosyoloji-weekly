@@ -1,3 +1,4 @@
+.aso-event-browser,
 .aso-weekly,
 .aso-calendar {
   --aso-weekly-accent: var(--aso-primary, #8f1d2c);
@@ -6,6 +7,131 @@
   --aso-weekly-border: var(--aso-border, #d8d8d8);
   --aso-weekly-surface: var(--aso-surface, #f5f3ef);
   color: var(--aso-weekly-text);
+}
+
+/* Event browser filters and date-state navigation. */
+.aso-event-browser {
+  width: 100%;
+  min-width: 0;
+}
+
+.aso-event-browser__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--aso-weekly-border);
+}
+
+.aso-event-browser__tabs a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 16px;
+  border: 1px solid var(--aso-weekly-border);
+  background: var(--aso-weekly-bg);
+  color: var(--aso-weekly-text);
+  font-size: .78rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.aso-event-browser__tabs a:hover,
+.aso-event-browser__tabs a:focus-visible,
+.aso-event-browser__tabs a.is-active {
+  border-color: var(--aso-weekly-accent);
+  background: var(--aso-weekly-accent);
+  color: #fff;
+}
+
+.aso-event-browser__filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr)) auto auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: clamp(28px, 4vw, 46px);
+  padding: 18px;
+  background: var(--aso-weekly-surface);
+}
+
+.aso-event-browser__filters label {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  color: var(--aso-weekly-text);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.aso-event-browser__filters select,
+.aso-event-browser__filters button,
+.aso-event-browser__clear {
+  min-height: 44px;
+  border: 1px solid var(--aso-weekly-border);
+  border-radius: 0;
+  font: inherit;
+}
+
+.aso-event-browser__filters select {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 34px 9px 11px;
+  background: var(--aso-weekly-bg);
+  color: var(--aso-weekly-text);
+}
+
+.aso-event-browser__filters button,
+.aso-event-browser__clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 16px;
+  background: var(--aso-weekly-accent);
+  color: #fff;
+  font-weight: 900;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.aso-event-browser__clear {
+  border-color: var(--aso-weekly-text);
+  background: transparent;
+  color: var(--aso-weekly-text);
+}
+
+.aso-event-browser__results,
+.aso-weekly-event,
+.aso-weekly-event__body,
+.aso-calendar-mobile-event,
+.aso-calendar-mobile-event > div {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.aso-weekly-event__title,
+.aso-weekly-event__title a,
+.aso-weekly-event__excerpt,
+.aso-calendar-mobile-event h3,
+.aso-calendar-mobile-event h3 a {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 760px) {
+  .aso-event-browser__filters {
+    grid-template-columns: 1fr;
+  }
+
+  .aso-event-browser__tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .aso-weekly__header,
