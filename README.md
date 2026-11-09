@@ -202,3 +202,7 @@ Tag push edildiğinde repodaki tek release workflow'u kurulabilir ZIP paketini o
 ## 1.0.0
 
 - İlk kararlı sürüm; depo geçmişi temiz bir başlangıca alındı. İçerik 0.2.1 ile aynıdır.
+
+## 1.0.1
+
+- Güncelleme ekranındaki “Tekrar kontrol et” artık GitHub sürüm önbelleğini temizler; yeni sürümler hemen görünür. Sürüm bilgisi 1 saat yerine 5 dakika önbelleklenir.

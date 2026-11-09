@@ -62,7 +62,8 @@ function asosyoloji_weekly_latest_release( $force = false ) {
 		'body'         => wp_kses_post( $data['body'] ?? '' ),
 	);
 
-	set_site_transient( $cache_key, $release, HOUR_IN_SECONDS );
+	// Short cache: a manual "check again" must see a new release right away.
+	set_site_transient( $cache_key, $release, 5 * MINUTE_IN_SECONDS );
 
 	return $release;
 }
@@ -135,3 +136,6 @@ function asosyoloji_weekly_clear_release_cache() {
 	delete_site_transient( 'asosyoloji_weekly_github_release' );
 }
 add_action( 'wp_update_plugins', 'asosyoloji_weekly_clear_release_cache' );
+// Dashboard → Updates → "Check again" deletes the update_plugins transient first.
+add_action( 'delete_site_transient_update_plugins', 'asosyoloji_weekly_clear_release_cache' );
+add_action( 'upgrader_process_complete', 'asosyoloji_weekly_clear_release_cache' );
